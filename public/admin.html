@@ -18,11 +18,26 @@
   <input id="fora" placeholder="Equipa fora">
   <button onclick="addMatch()">Adicionar jogo</button>
 
+  <!-- PALPITES -->
+  <h2>Inserir palpite</h2>
+  <input id="player_id" placeholder="ID jogador">
+  <input id="match_id" placeholder="ID jogo">
+  <input id="palpiteCasa" placeholder="Golos casa">
+  <input id="palpiteFora" placeholder="Golos fora">
+  <button onclick="addPrediction()">Adicionar palpite</button>
+
+  <!-- RESULTADOS -->
+  <h2>Inserir resultado</h2>
+  <input id="resMatchId" placeholder="ID jogo">
+  <input id="resCasa" placeholder="Golos casa">
+  <input id="resFora" placeholder="Golos fora">
+  <button onclick="setResult()">Inserir resultado</button>
+
   <script>
 
-    // DEBUG (vai aparecer no console)
     console.log("Admin carregado ✅");
 
+    // ✅ Jogadores
     function addPlayer() {
       const nome = document.getElementById("nome").value;
 
@@ -36,19 +51,14 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nome })
       })
-      .then(res => res.text())
-      .then(() => alert("Jogador adicionado ✅"))
-      .catch(err => {
-        console.error(err);
-        alert("Erro ❌");
-      });
+      .then(() => alert("Jogador criado ✅"))
+      .catch(err => console.error(err));
     }
 
+    // ✅ Jogos
     function addMatch() {
       const casa = document.getElementById("casa").value;
       const fora = document.getElementById("fora").value;
-
-      console.log("Clique no botão ✅"); // DEBUG
 
       if (!casa || !fora) {
         alert("Preenche as equipas!");
@@ -60,15 +70,56 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ casa, fora })
       })
-      .then(res => res.text())
       .then(() => alert("Jogo criado ✅"))
-      .catch(err => {
-        console.error(err);
-        alert("Erro ao criar jogo ❌");
-      });
+      .catch(err => console.error(err));
+    }
+
+    // ✅ Palpites
+    function addPrediction() {
+      const player_id = document.getElementById("player_id").value;
+      const match_id = document.getElementById("match_id").value;
+      const casa = document.getElementById("palpiteCasa").value;
+      const fora = document.getElementById("palpiteFora").value;
+
+      if (!player_id || !match_id) {
+        alert("IDs obrigatórios!");
+        return;
+      }
+
+      fetch("/add-prediction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          player_id: parseInt(player_id),
+          match_id: parseInt(match_id),
+          palpite_casa: parseInt(casa),
+          palpite_fora: parseInt(fora)
+        })
+      })
+      .then(() => alert("Palpite adicionado ✅"))
+      .catch(err => console.error(err));
+    }
+
+    // ✅ Resultados
+    function setResult() {
+      const id = document.getElementById("resMatchId").value;
+      const casa = document.getElementById("resCasa").value;
+      const fora = document.getElementById("resFora").value;
+
+      fetch("/result/" + id, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          casa: parseInt(casa),
+          fora: parseInt(fora)
+        })
+      })
+      .then(() => alert("Resultado inserido ✅"))
+      .catch(err => console.error(err));
     }
 
   </script>
 
 </body>
 </html>
+``
