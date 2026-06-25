@@ -39,3 +39,21 @@
 
 </body>
 </html>
+<h2>Criar jogo</h2>
+<input id="casa" placeholder="Equipa casa">
+<input id="fora" placeholder="Equipa fora">
+<button onclick="addMatch()">Adicionar jogo</button>
+
+<script>
+function addMatch() {
+  fetch("/add-match", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      casa: casa.value,
+      fora: fora.value
+    })
+  }).then(() => alert("Jogo criado!"));
+}
+</script>
+``
