@@ -62,7 +62,7 @@ function loadPlayers() {
     .catch(err => console.error("Erro players:", err));
 }
 
-// ✅ carregar jogos
+// ✅ carregar jogos (CORRIGIDO)
 function loadMatches() {
   fetch("/matches")
     .then(res => res.json())
@@ -77,7 +77,8 @@ function loadMatches() {
 
       data.forEach(m => {
 
-        const texto = m.casa + " vs " + m.fora;
+        // CORRIGIDO: usar equipa_casa e equipa_fora
+        const texto = m.equipa_casa + " vs " + m.equipa_fora;
 
         // dropdown palpite
         let o1 = document.createElement("option");
@@ -120,7 +121,7 @@ function addMatch() {
   fetch("/add-match", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ casa, fora })
+    body: JSON.stringify({ equipa_casa: casa, equipa_fora: fora })
   })
   .then(res => res.text())
   .then(() => {
