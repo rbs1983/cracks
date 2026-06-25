@@ -134,6 +134,24 @@
     </table>
   </div>
 
+  <!-- 🔥 PROGNÓSTICOS -->
+  <div class="section">
+    <h2>Prognósticos</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Jogador</th>
+          <th>Jogo</th>
+          <th>Palpite</th>
+          <th>Resultado Real</th>
+          <th>Pontos</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-prognosticos"></tbody>
+    </table>
+  </div>
+
 <script>
   // 🔥 Atualizar cartões de resumo
   function atualizarResumoJogadores() {
@@ -221,6 +239,7 @@
       alert("Resultado registado!");
       loadMatches();
       atualizarResumoJogadores();
+      loadPredictions();
     });
   }
 
@@ -267,6 +286,53 @@
       alert("Prognóstico guardado!");
       document.getElementById("palpite-casa").value = "";
       document.getElementById("palpite-fora").value = "";
+      loadPredictions();
+    });
+  }
+
+  // 🔥 Carregar prognósticos
+  function loadPredictions() {
+    Promise.all([
+      fetch("/all-predictions").then(r => r.json()),
+      fetch("/players").then(r => r.json()),
+      fetch("/matches").then(r => r.json())
+    ]).then(([predictions, players, matches]) => {
+
+      const tabela = document.getElementById("tabela-prognosticos");
+      tabela.innerHTML = "";
+
+      predictions.forEach(p => {
+        const jogador = players.find(pl => pl.id === p.player_id);
+        const jogo = matches.find(m => m.id === p.match_id);
+
+        const resultadoReal =
+          jogo.golos_casa !== null
+            ? `${jogo.golos_casa} : ${jogo.golos_fora}`
+            : "-";
+
+        let pontos = "-";
+        if (jogo.processado) {
+          if (p.palpite_casa === jogo.golos_casa && p.palpite_fora === jogo.golos_fora) {
+            pontos = 3;
+          } else if (
+            (p.palpite_casa - p.palpite_fora) === (jogo.golos_casa - jogo.golos_fora)
+          ) {
+            pontos = 1;
+          } else {
+            pontos = 0;
+          }
+        }
+
+        tabela.innerHTML += `
+          <tr>
+            <td>${jogador.nome}</td>
+            <td>${jogo.equipa_casa} vs ${jogo.equipa_fora}</td>
+            <td>${p.palpite_casa} : ${p.palpite_fora}</td>
+            <td>${resultadoReal}</td>
+            <td>${pontos}</td>
+          </tr>
+        `;
+      });
     });
   }
 
@@ -276,6 +342,7 @@
     atualizarResumoJogadores();
     loadPlayers();
     loadMatchesForPredictions();
+    loadPredictions();
   };
 </script>
 
