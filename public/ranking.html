@@ -1,41 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt">
 <head>
-  <title>Ranking</title>
+  <meta charset="UTF-8">
+  <title>Classificação Final</title>
+
   <style>
-    table { border-collapse: collapse; width: 50%; margin: auto; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #eee; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #fafafa;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .section {
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+
+    button {
+      padding: 8px 15px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
+
 <body>
 
-<h1 style="text-align:center;">Ranking Geral</h1>
+  <h1>Classificação Final</h1>
 
-<table id="ranking">
-  <tr>
-    <th>Posição</th>
-    <th>Jogador</th>
-    <th>Pontos</th>
-  </tr>
-</table>
+  <button onclick="window.location.href='dashboard.html'">Voltar ao Dashboard</button>
+
+  <div class="section">
+    <h2>Ranking</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Posição</th>
+          <th>Jogador</th>
+          <th>Pontos</th>
+        </tr>
+      </thead>
+      <tbody id="ranking-table"></tbody>
+    </table>
+  </div>
 
 <script>
-fetch("/ranking")
-  .then(res => res.json())
-  .then(data => {
-    const tabela = document.getElementById("ranking");
+  function loadRanking() {
+    fetch("/ranking")
+      .then(r => r.json())
+      .then(ranking => {
+        const tabela = document.getElementById("ranking-table");
+        tabela.innerHTML = "";
 
-    data.forEach((p, i) => {
-      tabela.innerHTML += `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${p.nome}</td>
-          <td>${p.pontos}</td>
-        </tr>
-      `;
-    });
-  });
+        ranking.forEach((p, index) => {
+          tabela.innerHTML += `
+            <tr>
+              <td>${index + 1}º</td>
+              <td>${p.nome}</td>
+              <td>${p.pontos}</td>
+            </tr>
+          `;
+        });
+      });
+  }
+
+  window.onload = loadRanking;
 </script>
 
 </body>
