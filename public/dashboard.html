@@ -28,16 +28,6 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
-    .card h3 {
-      margin: 0 0 10px 0;
-    }
-
-    .card p {
-      font-size: 22px;
-      font-weight: bold;
-      margin: 0;
-    }
-
     .section {
       margin-top: 30px;
       padding: 20px;
@@ -70,6 +60,11 @@
       padding: 8px 15px;
       cursor: pointer;
     }
+
+    .btn-small {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
   </style>
 </head>
 
@@ -94,6 +89,11 @@
       <p id="media-pontos">0</p>
     </div>
   </div>
+
+  <!-- 🔥 BOTÃO PARA CLASSIFICAÇÃO FINAL -->
+  <button onclick="window.location.href='ranking.html'" style="margin-bottom:20px;">
+    Ver Classificação Final
+  </button>
 
   <!-- 🔥 CRIAR JOGO -->
   <div class="section">
@@ -127,6 +127,7 @@
           <th>Fora</th>
           <th>Resultado</th>
           <th>Processado</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="tabela-jogos"></tbody>
@@ -139,20 +140,14 @@
     fetch("/players")
       .then(r => r.json())
       .then(players => {
-
-        // Total
         document.getElementById("total-jogadores").textContent = players.length;
 
-        // Top jogador
         if (players.length > 0) {
           const top = players.reduce((a, b) => (a.pontos > b.pontos ? a : b));
           document.getElementById("top-jogador").textContent =
             `${top.nome} (${top.pontos} pts)`;
-        } else {
-          document.getElementById("top-jogador").textContent = "—";
         }
 
-        // Média
         const media =
           players.length > 0
             ? (players.reduce((s, p) => s + p.pontos, 0) / players.length).toFixed(1)
@@ -195,10 +190,38 @@
               <td>${m.equipa_fora}</td>
               <td>${m.golos_casa ?? "-"} : ${m.golos_fora ?? "-"}</td>
               <td>${m.processado ? "Sim" : "Não"}</td>
+              <td>
+                <button class="btn-small" onclick="mostrarInputs(${m.id})">Inserir Resultado</button>
+                <div id="inputs-${m.id}" style="display:none; margin-top:5px;">
+                  <input id="res-casa-${m.id}" type="number" placeholder="Casa" style="width:60px;">
+                  <input id="res-fora-${m.id}" type="number" placeholder="Fora" style="width:60px;">
+                  <button class="btn-small" onclick="guardarResultado(${m.id})">Guardar</button>
+                </div>
+              </td>
             </tr>
           `;
         });
       });
+  }
+
+  function mostrarInputs(id) {
+    document.getElementById(`inputs-${id}`).style.display = "block";
+  }
+
+  // 🔥 Guardar resultado
+  function guardarResultado(id) {
+    const casa = parseInt(document.getElementById(`res-casa-${id}`).value);
+    const fora = parseInt(document.getElementById(`res-fora-${id}`).value);
+
+    fetch(`/result/${id}`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ casa, fora })
+    }).then(() => {
+      alert("Resultado registado!");
+      loadMatches();
+      atualizarResumoJogadores();
+    });
   }
 
   // 🔥 Carregar jogadores no dropdown
