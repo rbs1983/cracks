@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ranking</title>
+  <style>
+    table { border-collapse: collapse; width: 50%; margin: auto; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+
+<h1 style="text-align:center;">Ranking Geral</h1>
+
+<table id="ranking">
+  <tr>
+    <th>Posição</th>
+    <th>Jogador</th>
+    <th>Pontos</th>
+  </tr>
+</table>
+
+<script>
+fetch("/ranking")
+  .then(res => res.json())
+  .then(data => {
+    const tabela = document.getElementById("ranking");
+
+    data.forEach((p, i) => {
+      tabela.innerHTML += `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${p.nome}</td>
+          <td>${p.pontos}</td>
+        </tr>
+      `;
+    });
+  });
+</script>
+
+</body>
+</html>
