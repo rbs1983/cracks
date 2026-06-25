@@ -8,200 +8,139 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-// ligação à base de dados
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
 
-// ✅ criar tabelas antes de iniciar
+// INIT DB
 async function initDB() {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS players (
-        id SERIAL PRIMARY KEY,
-        nome TEXT NOT NULL,
-        pontos INT DEFAULT 0
-      );
-    `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS players (
+      id SERIAL PRIMARY KEY,
+      nome TEXT UNIQUE NOT NULL,
+      pontos INT DEFAULT 0
+    );
+  `);
 
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS matches (
-        id SERIAL PRIMARY KEY,
-        casa TEXT NOT NULL,
-        fora TEXT NOT NULL,
-        golos_casa INT,
-        golos_fora INT
-      );
-    `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS matches (
+      id SERIAL PRIMARY KEY,
+      casa TEXT NOT NULL,
+      fora TEXT NOT NULL,
+      golos_casa INT,
+      golos_fora INT
+    );
+  `);
 
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS predictions (
-        id SERIAL PRIMARY KEY,
-        player_id INT,
-        match_id INT,
-        palpite_casa INT,
-        palpite_fora INT
-      );
-    `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS predictions (
+      id SERIAL PRIMARY KEY,
+      player_id INT,
+      match_id INT,
+      palpite_casa INT,
+      palpite_fora INT
+    );
+  `);
 
-    console.log("✅ Tabelas prontas");
-  } catch (err) {
-    console.error("Erro DB:", err);
-  }
-}
+  // jogadores fixos
+  const jogadores = [
+    "André", "João", "Pedro",
+    "Miguel", "Rui", "Carlos",
+    "Bruno", "Tiago"
+  ];
 
-//
-// ✅ ROTAS
-//
-
-// ✅ listar jogadores
-app.get("/players", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM players ORDER BY id");
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("erro");
-  }
-});
-
-// ✅ adicionar jogador
-app.post("/add-player", async (req, res) => {
-  try {
-    const { nome } = req.body;
-
-    if (!nome) {
-      return res.status(400).send("Nome obrigatório");
-    }
-
+  for (let nome of jogadores) {
     await pool.query(
-      "INSERT INTO players(nome) VALUES($1)",
+      "INSERT INTO players(nome) VALUES($1) ON CONFLICT (nome) DO NOTHING",
       [nome]
     );
-
-    res.send("ok");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("erro");
   }
+
+  console.log("✅ DB pronta");
+}
+
+// ROTAS
+app.get("/players", async (req, res) => {
+  const result = await pool.query("SELECT * FROM players");
+  res.json(result.rows);
 });
 
-// ✅ ranking
 app.get("/ranking", async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT nome, pontos FROM players ORDER BY pontos DESC"
-    );
-
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("erro");
-  }
+  const result = await pool.query(
+    "SELECT nome,pontos FROM players ORDER BY pontos DESC"
+  );
+  res.json(result.rows);
 });
 
-// ✅ listar jogos
 app.get("/matches", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM matches ORDER BY id");
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("erro");
-  }
+  const result = await pool.query("SELECT * FROM matches");
+  res.json(result.rows);
 });
 
-// ✅ adicionar jogo
 app.post("/add-match", async (req, res) => {
-  try {
-    const { casa, fora } = req.body;
+  const { casa, fora } = req.body;
 
-    if (!casa || !fora) {
-      return res.status(400).send("Equipas obrigatórias");
-    }
+  await pool.query(
+    "INSERT INTO matches(casa,fora) VALUES($1,$2)",
+    [casa, fora]
+  );
 
-    await pool.query(
-      "INSERT INTO matches(casa, fora) VALUES($1,$2)",
-      [casa, fora]
-    );
-
-    res.send("ok");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("erro");
-  }
+  res.send("ok");
 });
 
-// ✅ adicionar palpite
 app.post("/add-prediction", async (req, res) => {
-  try {
-    const { player_id, match_id, palpite_casa, palpite_fora } = req.body;
+  const { player_id, match_id, palpite_casa, palpite_fora } = req.body;
 
-    await pool.query(
-      "INSERT INTO predictions(player_id, match_id, palpite_casa, palpite_fora) VALUES($1,$2,$3,$4)",
-      [player_id, match_id, palpite_casa, palpite_fora]
-    );
+  await pool.query(
+    "INSERT INTO predictions(player_id,match_id,palpite_casa,palpite_fora) VALUES($1,$2,$3,$4)",
+    [player_id, match_id, palpite_casa, palpite_fora]
+  );
 
-    res.send("ok");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("erro");
-  }
+  res.send("ok");
 });
 
-// ✅ inserir resultado + calcular pontos
 app.post("/result/:id", async (req, res) => {
-  try {
-    const { casa, fora } = req.body;
-    const match_id = req.params.id;
+  const { casa, fora } = req.body;
+  const id = req.params.id;
 
-    // guardar resultado
-    await pool.query(
-      "UPDATE matches SET golos_casa=$1, golos_fora=$2 WHERE id=$3",
-      [casa, fora, match_id]
-    );
+  await pool.query(
+    "UPDATE matches SET golos_casa=$1,golos_fora=$2 WHERE id=$3",
+    [casa, fora, id]
+  );
 
-    // buscar palpites
-    const preds = await pool.query(
-      "SELECT * FROM predictions WHERE match_id=$1",
-      [match_id]
-    );
+  const preds = await pool.query(
+    "SELECT * FROM predictions WHERE match_id=$1",
+    [id]
+  );
 
-    for (let p of preds.rows) {
+  for (let p of preds.rows) {
 
-      let pontos = 0;
+    let pontos = 0;
 
-      const real =
-        casa > fora ? "casa" :
-        casa < fora ? "fora" : "empate";
+    const real =
+      casa > fora ? "casa" :
+      casa < fora ? "fora" : "empate";
 
-      const palpite =
-        p.palpite_casa > p.palpite_fora ? "casa" :
-        p.palpite_casa < p.palpite_fora ? "fora" : "empate";
+    const palpite =
+      p.palpite_casa > p.palpite_fora ? "casa" :
+      p.palpite_casa < p.palpite_fora ? "fora" : "empate";
 
-      if (p.palpite_casa == casa && p.palpite_fora == fora) {
-        pontos = 3;
-      } else if (real === palpite) {
-        pontos = 1;
-      }
-
-      await pool.query(
-        "UPDATE players SET pontos = pontos + $1 WHERE id = $2",
-        [pontos, p.player_id]
-      );
+    if (p.palpite_casa == casa && p.palpite_fora == fora) {
+      pontos = 3;
+    } else if (real === palpite) {
+      pontos = 1;
     }
 
-    res.send("✅ resultado atualizado");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("erro");
+    await pool.query(
+      "UPDATE players SET pontos = pontos + $1 WHERE id=$2",
+      [pontos, p.player_id]
+    );
   }
+
+  res.send("ok");
 });
 
-// ✅ iniciar servidor
 initDB().then(() => {
-  app.listen(3000, () => {
-    console.log("🚀 Servidor ON");
-  });
+  app.listen(3000, () => console.log("🚀 Server ON"));
 });
