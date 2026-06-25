@@ -9,11 +9,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public")); // serve index.html e admin.html
 
-// ENDPOINT ROOT (evita erro 502)
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
 // POSTGRES CONNECTION
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
