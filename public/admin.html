@@ -7,18 +7,34 @@
 
   <h1>Painel Admin</h1>
 
-  <!-- JOGADOR -->
+  <!-- JOGADORES -->
   <h2>Adicionar jogador</h2>
   <input id="nome" placeholder="Nome">
   <button onclick="addPlayer()">Adicionar jogador</button>
 
-  <!-- JOGO -->
+  <!-- JOGOS -->
   <h2>Criar jogo</h2>
   <input id="casa" placeholder="Equipa casa">
   <input id="fora" placeholder="Equipa fora">
   <button onclick="addMatch()">Adicionar jogo</button>
 
+  <!-- PALPITES -->
+  <h2>Inserir palpite</h2>
+  <input id="player_id" placeholder="ID jogador">
+  <input id="match_id" placeholder="ID jogo">
+  <input id="palpiteCasa" placeholder="Golos casa">
+  <input id="palpiteFora" placeholder="Golos fora">
+  <button onclick="addPrediction()">Adicionar palpite</button>
+
+  <!-- RESULTADO -->
+  <h2>Inserir resultado</h2>
+  <input id="resMatchId" placeholder="ID jogo">
+  <input id="resCasa" placeholder="Golos casa">
+  <input id="resFora" placeholder="Golos fora">
+  <button onclick="setResult()">Inserir resultado</button>
+
   <script>
+
     // adicionar jogador
     function addPlayer() {
       fetch("/add-player", {
@@ -31,51 +47,3 @@
     // adicionar jogo
     function addMatch() {
       fetch("/add-match", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({
-          casa: casa.value,
-          fora: fora.value
-        })
-      }).then(() => alert("Jogo criado"));
-    }
-    function addPrediction() {
-  fetch("/add-prediction", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      player_id: parseInt(player_id.value),
-      match_id: parseInt(match_id.value),
-      casa: parseInt(palpiteCasa.value),
-      fora: parseInt(palpiteFora.value)
-    })
-  }).then(() => alert("Palpite adicionado"));
-}
-
-function setResult() {
-  fetch("/result/" + resMatchId.value, {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      casa: parseInt(resCasa.value),
-      fora: parseInt(resFora.value)
-    })
-  }).then(() => alert("Resultado inserido"));
-}
-``
-  </script>
-<h2>Inserir palpite</h2>
-<input id="player_id" placeholder="ID jogador">
-<input id="match_id" placeholder="ID jogo">
-<input id="palpiteCasa" placeholder="Golos casa">
-<input id="palpiteFora" placeholder="Golos fora">
-<button onclick="addPrediction()">Adicionar palpite</button>
-
-<h2>Inserir resultado real</h2>
-<input id="resMatchId" placeholder="ID jogo">
-<input id="resCasa" placeholder="Golos casa">
-<input id="resFora" placeholder="Golos fora">
-<button onclick="setResult()">Inserir resultado</button>
-  
-</body>
-</html>
