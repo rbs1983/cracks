@@ -4,7 +4,20 @@
   <title>Bolão Futebol</title>
 </head>
 <body>
-  <h1>🏆 Bolão Futebol</h1>
-  <p>Site a funcionar 🎉</p>
+  <h1>🏆 Ranking</h1>
+  <ul id="ranking"></ul>
+
+  <script>
+    fetch("/ranking")
+      .then(res => res.json())
+      .then(data => {
+        const ul = document.getElementById("ranking");
+        data.forEach(p => {
+          const li = document.createElement("li");
+          li.textContent = p.nome + " - " + p.pontos + " pts";
+          ul.appendChild(li);
+        });
+      });
+  </script>
 </body>
 </html>
