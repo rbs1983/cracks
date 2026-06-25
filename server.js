@@ -68,12 +68,18 @@ app.get("/ranking", async (req, res) => {
   res.json(result.rows);
 });
 
+// Listar todos os palpites (para prognósticos e pontos.html)
+app.get("/all-predictions", async (req, res) => {
+  const result = await pool.query("SELECT * FROM predictions");
+  res.json(result.rows);
+});
+
 // Adicionar jogo
 app.post("/add-match", async (req, res) => {
-  const { casa, fora } = req.body;
+  const { equipa_casa, equipa_fora } = req.body;
 
   await pool.query(
-    "INSERT INTO matches(casa, fora) VALUES($1, $2)",
+    "INSERT INTO matches(equipa_casa, equipa_fora) VALUES($1, $2)",
     [equipa_casa, equipa_fora]
   );
 
