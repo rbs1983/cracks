@@ -1,194 +1,259 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt">
 <head>
-  <title>Dashboard — Bolão</title>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
   <style>
-    body { font-family: Arial; margin: 0; padding: 0; background: #f5f5f5; }
-    header { background: #222; color: white; padding: 20px; text-align: center; font-size: 26px; }
-    nav { background: #333; padding: 10px; display: flex; gap: 20px; }
-    nav a { color: white; text-decoration: none; font-size: 18px; }
-    nav a:hover { text-decoration: underline; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #fafafa;
+    }
 
-    section { padding: 20px; background: white; margin: 20px; border-radius: 8px; }
-    h2 { margin-top: 0; }
+    h1 {
+      margin-bottom: 20px;
+    }
 
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    th { background: #eee; }
+    .card-container {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
 
-    input, select, button { padding: 6px; margin: 4px; }
-    button { cursor: pointer; }
+    .card {
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 10px;
+      width: 220px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .card h3 {
+      margin: 0 0 10px 0;
+    }
+
+    .card p {
+      font-size: 22px;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .section {
+      margin-top: 30px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+
+    input, select {
+      padding: 8px;
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 8px 15px;
+      cursor: pointer;
+    }
   </style>
 </head>
+
 <body>
 
-<header>Dashboard — Bolão</header>
+  <h1>Dashboard</h1>
 
-<nav>
-  <a href="#jogos">Jogos</a>
-  <a href="#prognosticos">Prognósticos</a>
-  <a href="#pontos">Pontos por Jogo</a>
-  <a href="#ranking">Ranking</a>
-</nav>
+  <!-- 🔥 CARTÕES DE RESUMO -->
+  <div class="card-container">
+    <div class="card">
+      <h3>Total de Jogadores</h3>
+      <p id="total-jogadores">0</p>
+    </div>
 
-<!-- ===================== JOGOS ===================== -->
-<section id="jogos">
-  <h2>Jogos</h2>
+    <div class="card">
+      <h3>Top Jogador</h3>
+      <p id="top-jogador">—</p>
+    </div>
 
-  <h3>Criar Jogo</h3>
-  <input id="casa" placeholder="Casa">
-  <input id="fora" placeholder="Fora">
-  <button onclick="addMatch()">Criar</button>
+    <div class="card">
+      <h3>Média de Pontos</h3>
+      <p id="media-pontos">0</p>
+    </div>
+  </div>
 
-  <h3>Lista de Jogos</h3>
-  <ul id="listaJogos"></ul>
+  <!-- 🔥 CRIAR JOGO -->
+  <div class="section">
+    <h2>Criar Jogo</h2>
+    <input id="casa" placeholder="Equipa da casa">
+    <input id="fora" placeholder="Equipa de fora">
+    <button onclick="addMatch()">Criar</button>
+  </div>
 
-  <h3>Inserir Resultado</h3>
-  <select id="resultMatchSelect"></select>
-  <input id="resCasa" placeholder="Casa">
-  <input id="resFora" placeholder="Fora">
-  <button onclick="setResult()">Inserir</button>
-</section>
+  <!-- 🔥 INSERIR PROGNÓSTICO -->
+  <div class="section">
+    <h2>Inserir Prognóstico</h2>
 
-<!-- ===================== PROGNÓSTICOS ===================== -->
-<section id="prognosticos">
-  <h2>Prognósticos</h2>
-  <table id="tabelaPrognosticos"></table>
-</section>
+    <select id="player-select"></select>
+    <select id="match-select"></select>
 
-<!-- ===================== PONTOS ===================== -->
-<section id="pontos">
-  <h2>Pontos por Jogo</h2>
-  <table id="tabelaPontos"></table>
-</section>
+    <input id="palpite-casa" type="number" placeholder="Golos casa" style="width:120px;">
+    <input id="palpite-fora" type="number" placeholder="Golos fora" style="width:120px;">
 
-<!-- ===================== RANKING ===================== -->
-<section id="ranking">
-  <h2>Ranking Geral</h2>
-  <table id="tabelaRanking">
-    <tr>
-      <th>Posição</th>
-      <th>Jogador</th>
-      <th>Pontos</th>
-    </tr>
-  </table>
-</section>
+    <button onclick="addPrediction()">Guardar Prognóstico</button>
+  </div>
+
+  <!-- 🔥 LISTA DE JOGOS -->
+  <div class="section">
+    <h2>Jogos</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Casa</th>
+          <th>Fora</th>
+          <th>Resultado</th>
+          <th>Processado</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-jogos"></tbody>
+    </table>
+  </div>
 
 <script>
-async function loadAll() {
-  const players = await fetch("/players").then(r => r.json());
-  const matches = await fetch("/matches").then(r => r.json());
-  const predictions = await fetch("/all-predictions").then(r => r.json());
-  const ranking = await fetch("/ranking").then(r => r.json());
+  // 🔥 Atualizar cartões de resumo
+  function atualizarResumoJogadores() {
+    fetch("/players")
+      .then(r => r.json())
+      .then(players => {
 
-  // ===================== JOGOS =====================
-  const listaJogos = document.getElementById("listaJogos");
-  const resultSel = document.getElementById("resultMatchSelect");
-  listaJogos.innerHTML = "";
-  resultSel.innerHTML = "";
+        // Total
+        document.getElementById("total-jogadores").textContent = players.length;
 
-  matches.forEach(m => {
-    const texto = `${m.equipa_casa} vs ${m.equipa_fora}`;
-    const li = document.createElement("li");
+        // Top jogador
+        if (players.length > 0) {
+          const top = players.reduce((a, b) => (a.pontos > b.pontos ? a : b));
+          document.getElementById("top-jogador").textContent =
+            `${top.nome} (${top.pontos} pts)`;
+        } else {
+          document.getElementById("top-jogador").textContent = "—";
+        }
 
-    if (m.golos_casa === null) li.textContent = texto + " ⏳";
-    else li.textContent = texto + ` ✅ ${m.golos_casa}-${m.golos_fora}`;
+        // Média
+        const media =
+          players.length > 0
+            ? (players.reduce((s, p) => s + p.pontos, 0) / players.length).toFixed(1)
+            : 0;
 
-    listaJogos.appendChild(li);
+        document.getElementById("media-pontos").textContent = media;
+      });
+  }
 
-    const opt = document.createElement("option");
-    opt.value = m.id;
-    opt.textContent = texto;
-    resultSel.appendChild(opt);
-  });
+  // 🔥 Criar jogo
+  function addMatch() {
+    const casa = document.getElementById("casa").value;
+    const fora = document.getElementById("fora").value;
 
-  // ===================== PROGNÓSTICOS =====================
-  const tabProg = document.getElementById("tabelaPrognosticos");
-  let header = "<tr><th>Jogador</th>";
-  matches.forEach(m => header += `<th>${m.equipa_casa} vs ${m.equipa_fora}</th>`);
-  header += "</tr>";
-  tabProg.innerHTML = header;
-
-  players.forEach(p => {
-    let row = `<tr><td>${p.nome}</td>`;
-    matches.forEach(m => {
-      const pred = predictions.find(x => x.player_id === p.id && x.match_id === m.id);
-      row += `<td>${pred ? pred.palpite_casa + "-" + pred.palpite_fora : "-"}</td>`;
+    fetch("/add-match", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ equipa_casa: casa, equipa_fora: fora })
+    }).then(() => {
+      loadMatches();
+      loadMatchesForPredictions();
+      document.getElementById("casa").value = "";
+      document.getElementById("fora").value = "";
     });
-    row += "</tr>";
-    tabProg.innerHTML += row;
-  });
+  }
 
-  // ===================== PONTOS =====================
-  const tabPontos = document.getElementById("tabelaPontos");
-  let header2 = "<tr><th>Jogador</th>";
-  matches.forEach(m => header2 += `<th>${m.equipa_casa}-${m.equipa_fora}</th>`);
-  header2 += "<th>Total</th></tr>";
-  tabPontos.innerHTML = header2;
+  // 🔥 Carregar jogos
+  function loadMatches() {
+    fetch("/matches")
+      .then(r => r.json())
+      .then(matches => {
+        const tabela = document.getElementById("tabela-jogos");
+        tabela.innerHTML = "";
 
-  players.forEach(p => {
-    let total = 0;
-    let row = `<tr><td>${p.nome}</td>`;
+        matches.forEach(m => {
+          tabela.innerHTML += `
+            <tr>
+              <td>${m.id}</td>
+              <td>${m.equipa_casa}</td>
+              <td>${m.equipa_fora}</td>
+              <td>${m.golos_casa ?? "-"} : ${m.golos_fora ?? "-"}</td>
+              <td>${m.processado ? "Sim" : "Não"}</td>
+            </tr>
+          `;
+        });
+      });
+  }
 
-    matches.forEach(m => {
-      const pred = predictions.find(x => x.player_id === p.id && x.match_id === m.id);
+  // 🔥 Carregar jogadores no dropdown
+  function loadPlayers() {
+    fetch("/players")
+      .then(r => r.json())
+      .then(players => {
+        const sel = document.getElementById("player-select");
+        sel.innerHTML = "";
+        players.forEach(p => {
+          sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+        });
+      });
+  }
 
-      if (!pred || m.golos_casa === null) {
-        row += "<td>-</td>";
-        return;
-      }
+  // 🔥 Carregar jogos no dropdown de prognósticos
+  function loadMatchesForPredictions() {
+    fetch("/matches")
+      .then(r => r.json())
+      .then(matches => {
+        const sel = document.getElementById("match-select");
+        sel.innerHTML = "";
+        matches.forEach(m => {
+          sel.innerHTML += `<option value="${m.id}">
+            Jogo ${m.id}: ${m.equipa_casa} vs ${m.equipa_fora}
+          </option>`;
+        });
+      });
+  }
 
-      let pontos = 0;
-      if (pred.palpite_casa === m.golos_casa && pred.palpite_fora === m.golos_fora) pontos = 3;
-      else if ((pred.palpite_casa - pred.palpite_fora) === (m.golos_casa - m.golos_fora)) pontos = 1;
+  // 🔥 Guardar prognóstico
+  function addPrediction() {
+    const player_id = document.getElementById("player-select").value;
+    const match_id = document.getElementById("match-select").value;
+    const palpite_casa = parseInt(document.getElementById("palpite-casa").value);
+    const palpite_fora = parseInt(document.getElementById("palpite-fora").value);
 
-      total += pontos;
-      row += `<td>${pontos}</td>`;
+    fetch("/add-prediction", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ player_id, match_id, palpite_casa, palpite_fora })
+    }).then(() => {
+      alert("Prognóstico guardado!");
+      document.getElementById("palpite-casa").value = "";
+      document.getElementById("palpite-fora").value = "";
     });
+  }
 
-    row += `<td><b>${total}</b></td></tr>`;
-    tabPontos.innerHTML += row;
-  });
-
-  // ===================== RANKING =====================
-  const tabRank = document.getElementById("tabelaRanking");
-  ranking.forEach((p, i) => {
-    tabRank.innerHTML += `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${p.nome}</td>
-        <td>${p.pontos}</td>
-      </tr>
-    `;
-  });
-}
-
-// Criar jogo
-function addMatch() {
-  const casa = document.getElementById("casa").value;
-  const fora = document.getElementById("fora").value;
-
-  fetch("/add-match", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ equipa_casa: casa, equipa_fora: fora })
-  }).then(loadAll);
-}
-
-// Inserir resultado
-function setResult() {
-  const id = document.getElementById("resultMatchSelect").value;
-  const casa = document.getElementById("resCasa").value;
-  const fora = document.getElementById("resFora").value;
-
-  fetch("/result/" + id, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ casa: parseInt(casa), fora: parseInt(fora) })
-  }).then(loadAll);
-}
-
-loadAll();
+  // 🔥 Inicializar dashboard
+  window.onload = () => {
+    loadMatches();
+    atualizarResumoJogadores();
+    loadPlayers();
+    loadMatchesForPredictions();
+  };
 </script>
 
 </body>
