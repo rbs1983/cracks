@@ -18,32 +18,57 @@
   <input id="fora" placeholder="Equipa fora">
   <button onclick="addMatch()">Adicionar jogo</button>
 
-  <!-- PALPITES -->
-  <h2>Inserir palpite</h2>
-  <input id="player_id" placeholder="ID jogador">
-  <input id="match_id" placeholder="ID jogo">
-  <input id="palpiteCasa" placeholder="Golos casa">
-  <input id="palpiteFora" placeholder="Golos fora">
-  <button onclick="addPrediction()">Adicionar palpite</button>
-
-  <!-- RESULTADO -->
-  <h2>Inserir resultado</h2>
-  <input id="resMatchId" placeholder="ID jogo">
-  <input id="resCasa" placeholder="Golos casa">
-  <input id="resFora" placeholder="Golos fora">
-  <button onclick="setResult()">Inserir resultado</button>
-
   <script>
 
-    // adicionar jogador
+    // DEBUG (vai aparecer no console)
+    console.log("Admin carregado ✅");
+
     function addPlayer() {
+      const nome = document.getElementById("nome").value;
+
+      if (!nome) {
+        alert("Escreve um nome!");
+        return;
+      }
+
       fetch("/add-player", {
         method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ nome: nome.value })
-      }).then(() => alert("Jogador adicionado"));
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome })
+      })
+      .then(res => res.text())
+      .then(() => alert("Jogador adicionado ✅"))
+      .catch(err => {
+        console.error(err);
+        alert("Erro ❌");
+      });
     }
 
-    // adicionar jogo
     function addMatch() {
+      const casa = document.getElementById("casa").value;
+      const fora = document.getElementById("fora").value;
+
+      console.log("Clique no botão ✅"); // DEBUG
+
+      if (!casa || !fora) {
+        alert("Preenche as equipas!");
+        return;
+      }
+
       fetch("/add-match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ casa, fora })
+      })
+      .then(res => res.text())
+      .then(() => alert("Jogo criado ✅"))
+      .catch(err => {
+        console.error(err);
+        alert("Erro ao criar jogo ❌");
+      });
+    }
+
+  </script>
+
+</body>
+</html>
