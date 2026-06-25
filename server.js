@@ -114,7 +114,7 @@ app.post("/edit-prediction/:id", async (req, res) => {
   }
 });
 
-// PROCESSAR RESULTADO
+// PROCESSAR RESULTADO (REGRAS ACUMULATIVAS)
 app.post("/result/:id", async (req, res) => {
   const matchId = req.params.id;
 
@@ -142,15 +142,22 @@ app.post("/result/:id", async (req, res) => {
 
       let pontos = 0;
 
-      const diffP = pc - pf;
-      const diffR = casa - fora;
+      // 10 pontos — resultado exato
+      if (pc === casa && pf === fora) {
+        pontos = 10;
+      } else {
+        // 4 pontos — acertou vencedor
+        const diffP = pc - pf;
+        const diffR = casa - fora;
 
-      const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
-      const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
+        const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
+        const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
 
-      if (pc === casa && pf === fora) pontos = 10;
-      else if (pc === casa || pf === fora) pontos = 1;
-      else if (vP === vR) pontos = 4;
+        if (vP === vR) pontos += 4;
+
+        // 1 ponto — acertou um golo
+        if (pc === casa || pf === fora) pontos += 1;
+      }
 
       await pool.query(
         "UPDATE players SET pontos = pontos + $1 WHERE id=$2",
@@ -166,7 +173,7 @@ app.post("/result/:id", async (req, res) => {
   }
 });
 
-// REPROCESSAR JOGO
+// REPROCESSAR JOGO (REGRAS ACUMULATIVAS)
 app.post("/reprocess/:id", async (req, res) => {
   const matchId = req.params.id;
 
@@ -191,15 +198,18 @@ app.post("/reprocess/:id", async (req, res) => {
 
       let pontos = 0;
 
-      const diffP = pc - pf;
-      const diffR = casa - fora;
+      if (pc === casa && pf === fora) {
+        pontos = 10;
+      } else {
+        const diffP = pc - pf;
+        const diffR = casa - fora;
 
-      const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
-      const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
+        const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
+        const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
 
-      if (pc === casa && pf === fora) pontos = 10;
-      else if (pc === casa || pf === fora) pontos = 1;
-      else if (vP === vR) pontos = 4;
+        if (vP === vR) pontos += 4;
+        if (pc === casa || pf === fora) pontos += 1;
+      }
 
       await pool.query(
         "UPDATE players SET pontos = pontos - $1 WHERE id=$2",
