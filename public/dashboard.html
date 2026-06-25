@@ -159,3 +159,252 @@
   </div>
 
 <script>
+
+let editId = null;
+
+// Atualizar Top Jogador
+function atualizarResumoJogadores() {
+  fetch("/players")
+    .then(r => r.json())
+    .then(players => {
+      if (players.length > 0) {
+        const top = players.reduce((a, b) => (a.pontos > b.pontos ? a : b));
+        document.getElementById("top-jogador").textContent =
+          `${top.nome} (${top.pontos} pts)`;
+      } else {
+        document.getElementById("top-jogador").textContent = "—";
+      }
+    });
+}
+
+// Criar jogo
+function addMatch() {
+  const casa = document.getElementById("casa").value;
+  const fora = document.getElementById("fora").value;
+
+  fetch("/add-match", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ equipa_casa: casa, equipa_fora: fora })
+  }).then(() => {
+    loadMatches();
+    loadMatchesForPredictions();
+    document.getElementById("casa").value = "";
+    document.getElementById("fora").value = "";
+  });
+}
+
+// Carregar jogos
+function loadMatches() {
+  fetch("/matches")
+    .then(r => r.json())
+    .then(matches => {
+      const tabela = document.getElementById("tabela-jogos");
+      tabela.innerHTML = "";
+
+      matches.forEach(m => {
+        tabela.innerHTML += `
+          <tr>
+            <td>${m.id}</td>
+            <td>${m.equipa_casa}</td>
+            <td>${m.equipa_fora}</td>
+            <td>${m.golos_casa ?? "-"} : ${m.golos_fora ?? "-"}</td>
+            <td>${m.processado ? "Sim" : "Não"}</td>
+            <td>
+              <button class="btn-small" onclick="mostrarInputs(${m.id})">Inserir Resultado</button>
+
+              <button class="btn-small" style="background:#ff9800; color:white;"
+                      onclick="reprocessar(${m.id})">
+                Reprocessar
+              </button>
+
+              <div id="inputs-${m.id}" style="display:none; margin-top:5px;">
+                <input id="res-casa-${m.id}" type="number" placeholder="Casa" style="width:60px;">
+                <input id="res-fora-${m.id}" type="number" placeholder="Fora" style="width:60px;">
+                <button class="btn-small" onclick="guardarResultado(${m.id})">Guardar</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+    });
+}
+
+function mostrarInputs(id) {
+  document.getElementById(`inputs-${id}`).style.display = "block";
+}
+
+// Guardar resultado
+function guardarResultado(id) {
+  const casa = parseInt(document.getElementById(`res-casa-${id}`).value);
+  const fora = parseInt(document.getElementById(`res-fora-${id}`).value);
+
+  fetch(`/result/${id}`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ casa, fora })
+  }).then(() => {
+    alert("Resultado registado!");
+    loadMatches();
+    atualizarResumoJogadores();
+    loadPredictions();
+  });
+}
+
+// Reprocessar jogo
+function reprocessar(id) {
+  fetch(`/reprocess/${id}`, { method: "POST" })
+    .then(r => r.json())
+    .then(() => {
+      alert("Jogo reprocessado!");
+      loadMatches();
+      atualizarResumoJogadores();
+      loadPredictions();
+    });
+}
+
+// Carregar jogadores
+function loadPlayers() {
+  fetch("/players")
+    .then(r => r.json())
+    .then(players => {
+      const sel = document.getElementById("player-select");
+      sel.innerHTML = "";
+      players.forEach(p => {
+        sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+      });
+    });
+}
+
+// Carregar jogos para prognósticos
+function loadMatchesForPredictions() {
+  fetch("/matches")
+    .then(r => r.json())
+    .then(matches => {
+      const sel = document.getElementById("match-select");
+      sel.innerHTML = "";
+      matches.forEach(m => {
+        sel.innerHTML += `<option value="${m.id}">
+          Jogo ${m.id}: ${m.equipa_casa} vs ${m.equipa_fora}
+        </option>`;
+      });
+    });
+}
+
+// Guardar prognóstico
+function addPrediction() {
+  const player_id = document.getElementById("player-select").value;
+  const match_id = document.getElementById("match-select").value;
+  const palpite_casa = parseInt(document.getElementById("palpite-casa").value);
+  const palpite_fora = parseInt(document.getElementById("palpite-fora").value);
+
+  fetch("/add-prediction", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ player_id, match_id, palpite_casa, palpite_fora })
+  }).then(() => {
+    alert("Prognóstico guardado!");
+    document.getElementById("palpite-casa").value = "";
+    document.getElementById("palpite-fora").value = "";
+    loadPredictions();
+  });
+}
+
+// EDITAR PROGNÓSTICO
+function editarPrognostico(id, casa, fora) {
+  editId = id;
+  document.getElementById("edit-casa").value = casa;
+  document.getElementById("edit-fora").value = fora;
+  document.getElementById("edit-box").style.display = "block";
+}
+
+function fecharEdicao() {
+  document.getElementById("edit-box").style.display = "none";
+}
+
+function guardarEdicao() {
+  const palpite_casa = parseInt(document.getElementById("edit-casa").value);
+  const palpite_fora = parseInt(document.getElementById("edit-fora").value);
+
+  fetch(`/edit-prediction/${editId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ palpite_casa, palpite_fora })
+  })
+  .then(() => {
+    fecharEdicao();
+    loadPredictions();
+  });
+}
+
+// Carregar prognósticos
+function loadPredictions() {
+  Promise.all([
+    fetch("/all-predictions").then(r => r.json()),
+    fetch("/players").then(r => r.json()),
+    fetch("/matches").then(r => r.json())
+  ]).then(([predictions, players, matches]) => {
+
+    const tabela = document.getElementById("tabela-prognosticos");
+    tabela.innerHTML = "";
+
+    predictions.forEach(p => {
+      const jogador = players.find(pl => pl.id === p.player_id);
+      const jogo = matches.find(m => m.id === p.match_id);
+
+      const resultadoReal =
+        jogo.golos_casa !== null
+          ? `${jogo.golos_casa} : ${jogo.golos_fora}`
+          : "-";
+
+      let pontos = "-";
+
+      if (jogo.processado) {
+        const pc = p.palpite_casa;
+        const pf = p.palpite_fora;
+        const rc = jogo.golos_casa;
+        const rf = jogo.golos_fora;
+
+        const diffP = pc - pf;
+        const diffR = rc - rf;
+
+        const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
+        const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
+
+        if (pc === rc && pf === rf) pontos = 10;
+        else if (pc === rc || pf === rf) pontos = 1;
+        else if (vP === vR) pontos = 4;
+        else pontos = 0;
+      }
+
+      tabela.innerHTML += `
+        <tr>
+          <td>${jogador.nome}</td>
+          <td>${jogo.equipa_casa} vs ${jogo.equipa_fora}</td>
+          <td>
+            ${p.palpite_casa} : ${p.palpite_fora}
+            <button class="btn-small" onclick="editarPrognostico(${p.id}, ${p.palpite_casa}, ${p.palpite_fora})">
+              Editar
+            </button>
+          </td>
+          <td>${resultadoReal}</td>
+          <td>${pontos}</td>
+        </tr>
+      `;
+    });
+  });
+}
+
+// Inicializar dashboard
+window.onload = () => {
+  loadMatches();
+  atualizarResumoJogadores();
+  loadPlayers();
+  loadMatchesForPredictions();
+  loadPredictions();
+};
+
+</script>
+
+</body>
+</html>
