@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pontos por Jogo</title>
+  <style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+
+<h1>Pontos por Jogo</h1>
+<table id="tabela"></table>
+
+<script>
+async function loadData() {
+  const players = await fetch("/players").then(r => r.json());
+  const matches = await fetch("/matches").then(r => r.json());
+  const predictions = await fetch("/all-predictions").then(r => r.json());
+
+  const tabela = document.getElementById("tabela");
+
+  // Cabeçalho
+  let header = "<tr><th>Jogador</th>";
+  matches.forEach(m => {
+    header += `<th>${m.equipa_casa}-${m.equipa_fora}</th>`;
+  });
+  header += "<th>Total</th></tr>";
+  tabela.innerHTML = header;
+
+  // Linhas
+  players.forEach(p => {
+    let total = 0;
+    let row = `<tr><td>${p.nome}</td>`;
+
+    matches.forEach(m => {
+      const pred = predictions.find(x => x.player_id === p.id && x.match_id === m.id);
+
+      if (!pred || m.golos_casa === null) {
+        row += "<td>-</td>";
+        return;
+      }
+
+      let pontos = 0;
+      if (pred.palpite_casa === m.golos_casa && pred.palpite_fora === m.golos_fora) pontos = 3;
+      else if ((pred.palpite_casa - pred.palpite_fora) === (m.golos_casa - m.golos_fora)) pontos = 1;
+
+      total += pontos;
+      row += `<td>${pontos}</td>`;
+    });
+
+    row += `<td><b>${total}</b></td></tr>`;
+    tabela.innerHTML += row;
+  });
+}
+
+loadData();
+</script>
+
+</body>
+</html>
