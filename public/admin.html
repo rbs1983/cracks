@@ -7,24 +7,35 @@
 
   <h1>Painel Admin</h1>
 
-  <h2>Adicionar jogador</h2>
+  <h2>Jogador</h2>
   <input id="nome" placeholder="Nome">
-  <button onclick="addPlayer()">Adicionar</button>
+  <button onclick="addPlayer()">Adicionar jogador</button>
+
+  <h2>Jogo</h2>
+  <input id="casa" placeholder="Equipa Casa">
+  <input id="fora" placeholder="Equipa Fora">
+  <button onclick="addMatch()">Adicionar jogo</button>
 
   <script>
     function addPlayer() {
-      const nome = document.getElementById("nome").value;
-
       fetch("/add-player", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome })
-      }).then(() => {
-        alert("Jogador adicionado!");
-      });
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ nome: nome.value })
+      }).then(() => alert("Jogador adicionado"));
+    }
+
+    function addMatch() {
+      fetch("/add-match", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          casa: casa.value,
+          fora: fora.value
+        })
+      }).then(() => alert("Jogo adicionado"));
     }
   </script>
 
 </body>
 </html>
-``
