@@ -49,9 +49,9 @@ async function initDB() {
   console.log("DB pronta");
 }
 
-// Rota raiz → serve o index.html
+// Rota raiz → serve o dashboard.html
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
 
 // Listar jogadores
