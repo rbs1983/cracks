@@ -2,60 +2,128 @@
 <html>
 <head>
   <title>Painel Admin</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      font-size: 32px;
+    }
+
+    h2 {
+      margin-top: 30px;
+    }
+
+    input, select {
+      margin: 5px;
+      padding: 8px;
+    }
+
+    button {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    ul {
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
 
-  <h1>Painel Admin</h1>
+  <h1>Painel Admin ⚙️</h1>
 
-  <!-- JOGADORES -->
-  <h2>Adicionar jogador</h2>
-  <input id="nome" placeholder="Nome">
-  <button onclick="addPlayer()">Adicionar jogador</button>
+  <!-- LISTA DE JOGADORES -->
+  <h2>Jogadores</h2>
+  <ul id="listaJogadores"></ul>
 
-  <!-- JOGOS -->
+  <!-- CRIAR JOGO -->
   <h2>Criar jogo</h2>
   <input id="casa" placeholder="Equipa casa">
   <input id="fora" placeholder="Equipa fora">
   <button onclick="addMatch()">Adicionar jogo</button>
 
-  <!-- PALPITES -->
+  <!-- INSERIR PALPITE -->
   <h2>Inserir palpite</h2>
-  <input id="player_id" placeholder="ID jogador">
-  <input id="match_id" placeholder="ID jogo">
+
+  <select id="playerSelect"></select>
+  <select id="matchSelect"></select>
+
   <input id="palpiteCasa" placeholder="Golos casa">
   <input id="palpiteFora" placeholder="Golos fora">
+
   <button onclick="addPrediction()">Adicionar palpite</button>
 
-  <!-- RESULTADOS -->
+  <!-- INSERIR RESULTADO -->
   <h2>Inserir resultado</h2>
-  <input id="resMatchId" placeholder="ID jogo">
+
+  <select id="resultMatchSelect"></select>
+
   <input id="resCasa" placeholder="Golos casa">
   <input id="resFora" placeholder="Golos fora">
+
   <button onclick="setResult()">Inserir resultado</button>
 
   <script>
 
-    console.log("Admin carregado ✅");
+    // ✅ carregar jogadores (dropdown + lista)
+    function loadPlayers() {
+      fetch("/players")
+        .then(res => res.json())
+        .then(data => {
+          const select = document.getElementById("playerSelect");
+          const lista = document.getElementById("listaJogadores");
 
-    // ✅ Jogadores
-    function addPlayer() {
-      const nome = document.getElementById("nome").value;
+          select.innerHTML = "";
+          lista.innerHTML = "";
 
-      if (!nome) {
-        alert("Escreve um nome!");
-        return;
-      }
+          data.forEach(p => {
+            // dropdown
+            const option = document.createElement("option");
+            option.value = p.id;
+            option.textContent = p.nome;
+            select.appendChild(option);
 
-      fetch("/add-player", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome })
-      })
-      .then(() => alert("Jogador criado ✅"))
-      .catch(err => console.error(err));
+            // lista visual
+            const li = document.createElement("li");
+            li.textContent = p.nome;
+            lista.appendChild(li);
+          });
+        });
     }
 
-    // ✅ Jogos
+    // ✅ carregar jogos
+    function loadMatches() {
+      fetch("/matches")
+        .then(res => res.json())
+        .then(data => {
+
+          const matchSelect = document.getElementById("matchSelect");
+          const resultSelect = document.getElementById("resultMatchSelect");
+
+          matchSelect.innerHTML = "";
+          resultSelect.innerHTML = "";
+
+          data.forEach(m => {
+            const text = m.casa + " vs " + m.fora;
+
+            const option1 = document.createElement("option");
+            option1.value = m.id;
+            option1.textContent = text;
+            matchSelect.appendChild(option1);
+
+            const option2 = document.createElement("option");
+            option2.value = m.id;
+            option2.textContent = text;
+            resultSelect.appendChild(option2);
+          });
+        });
+    }
+
+    // ✅ criar jogo
     function addMatch() {
       const casa = document.getElementById("casa").value;
       const fora = document.getElementById("fora").value;
@@ -67,56 +135,46 @@
 
       fetch("/add-match", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ casa, fora })
       })
-      .then(() => alert("Jogo criado ✅"))
-      .catch(err => console.error(err));
+      .then(() => {
+        alert("Jogo criado ✅");
+        loadMatches();
+      });
     }
 
-    // ✅ Palpites
+    // ✅ adicionar palpite
     function addPrediction() {
-      const player_id = document.getElementById("player_id").value;
-      const match_id = document.getElementById("match_id").value;
-      const casa = document.getElementById("palpiteCasa").value;
-      const fora = document.getElementById("palpiteFora").value;
-
-      if (!player_id || !match_id) {
-        alert("IDs obrigatórios!");
-        return;
-      }
-
       fetch("/add-prediction", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type":"application/json"},
         body: JSON.stringify({
-          player_id: parseInt(player_id),
-          match_id: parseInt(match_id),
-          palpite_casa: parseInt(casa),
-          palpite_fora: parseInt(fora)
+          player_id: parseInt(playerSelect.value),
+          match_id: parseInt(matchSelect.value),
+          palpite_casa: parseInt(palpiteCasa.value),
+          palpite_fora: parseInt(palpiteFora.value)
         })
       })
-      .then(() => alert("Palpite adicionado ✅"))
-      .catch(err => console.error(err));
+      .then(() => alert("Palpite adicionado ✅"));
     }
 
-    // ✅ Resultados
+    // ✅ inserir resultado
     function setResult() {
-      const id = document.getElementById("resMatchId").value;
-      const casa = document.getElementById("resCasa").value;
-      const fora = document.getElementById("resFora").value;
-
-      fetch("/result/" + id, {
+      fetch("/result/" + resultMatchSelect.value, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type":"application/json"},
         body: JSON.stringify({
-          casa: parseInt(casa),
-          fora: parseInt(fora)
+          casa: parseInt(resCasa.value),
+          fora: parseInt(resFora.value)
         })
       })
-      .then(() => alert("Resultado inserido ✅"))
-      .catch(err => console.error(err));
+      .then(() => alert("Resultado inserido ✅"));
     }
+
+    // ✅ carregar dados ao iniciar
+    loadPlayers();
+    loadMatches();
 
   </script>
 
