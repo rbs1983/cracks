@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin</title>
+</head>
+<body>
+
+  <h1>Painel Admin</h1>
+
+  <h2>Adicionar jogador</h2>
+  <input id="nome" placeholder="Nome">
+  <button onclick="addPlayer()">Adicionar</button>
+
+  <script>
+    function addPlayer() {
+      const nome = document.getElementById("nome").value;
+
+      fetch("/add-player", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome })
+      }).then(() => {
+        alert("Jogador adicionado!");
+      });
+    }
+  </script>
+
+</body>
+</html>
+``
