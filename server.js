@@ -150,7 +150,7 @@ app.post("/result/:id", async (req, res) => {
 });
 
 // PORTA COMPATÍVEL COM RAILWAY
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 initDB().then(() => {
   app.listen(PORT, () => console.log(`🚀 Server ON na porta ${PORT}`));
