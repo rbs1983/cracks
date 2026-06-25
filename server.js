@@ -70,10 +70,10 @@ app.get("/ranking", async (req, res) => {
 
 // Adicionar jogo
 app.post("/add-match", async (req, res) => {
-  const { equipa_casa, equipa_fora } = req.body;
+  const { casa, fora } = req.body;
 
   await pool.query(
-    "INSERT INTO matches(equipa_casa, equipa_fora) VALUES($1, $2)",
+    "INSERT INTO matches(casa, fora) VALUES($1, $2)",
     [equipa_casa, equipa_fora]
   );
 
