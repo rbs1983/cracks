@@ -183,4 +183,41 @@ app.post("/reprocess/:id", async (req, res) => {
       else if (vP === vR) pontos = 4;
 
       await pool.query(
-        "UPDATE players SET pontos = pontos - $1 WHERE id
+        "UPDATE players SET pontos = pontos - $1 WHERE id=$2",
+        [pontos, p.player_id]
+      );
+    }
+
+    // Marcar como não processado
+    await pool.query(
+      "UPDATE matches SET processado=false WHERE id=$1",
+      [matchId]
+    );
+
+    // Reprocessar
+    await fetch(`http://localhost:${PORT}/result/${matchId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ casa, fora })
+    });
+
+    res.json({ message: "Jogo reprocessado com sucesso" });
+
+  } catch (err) {
+    console.error("Erro ao reprocessar:", err);
+    res.status(500).json({ error: "Erro ao reprocessar jogo" });
+  }
+});
+
+// Ranking
+app.get("/ranking", async (req, res) => {
+  const result = await pool.query(
+    "SELECT * FROM players ORDER BY pontos DESC, nome ASC"
+  );
+  res.json(result.rows);
+});
+
+// Start
+app.listen(PORT, () => {
+  console.log(`🚀 Server ON na porta ${PORT}`);
+});
