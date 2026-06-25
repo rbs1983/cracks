@@ -30,19 +30,18 @@
 <h2>Resultado</h2>
 <select id="resultMatchSelect"></select>
 
-<input id="resCasa">
-<input id="resFora">
+<input id="resCasa" placeholder="Casa">
+<input id="resFora" placeholder="Fora">
 
 <button onclick="setResult()">Inserir resultado</button>
 
 <script>
 
-// jogadores
+// ✅ carregar jogadores
 function loadPlayers() {
   fetch("/players")
     .then(res => res.json())
     .then(data => {
-
       const select = document.getElementById("playerSelect");
       const lista = document.getElementById("listaJogadores");
 
@@ -50,7 +49,6 @@ function loadPlayers() {
       lista.innerHTML = "";
 
       data.forEach(p => {
-
         const opt = document.createElement("option");
         opt.value = p.id;
         opt.textContent = p.nome;
@@ -60,15 +58,15 @@ function loadPlayers() {
         li.textContent = p.nome;
         lista.appendChild(li);
       });
-    });
+    })
+    .catch(err => console.error("Erro players:", err));
 }
 
-// jogos
+// ✅ carregar jogos
 function loadMatches() {
   fetch("/matches")
     .then(res => res.json())
     .then(data => {
-
       const mSel = document.getElementById("matchSelect");
       const rSel = document.getElementById("resultMatchSelect");
       const lista = document.getElementById("listaJogos");
@@ -81,21 +79,22 @@ function loadMatches() {
 
         const texto = m.casa + " vs " + m.fora;
 
-        // dropdowns
+        // dropdown palpite
         let o1 = document.createElement("option");
         o1.value = m.id;
         o1.textContent = texto;
         mSel.appendChild(o1);
 
+        // dropdown resultado
         let o2 = document.createElement("option");
         o2.value = m.id;
         o2.textContent = texto;
         rSel.appendChild(o2);
 
-        // lista
+        // lista visual
         let li = document.createElement("li");
 
-        if (m.golos_casa == null) {
+        if (m.golos_casa === null) {
           li.textContent = texto + " ⏳";
         } else {
           li.textContent =
@@ -104,53 +103,86 @@ function loadMatches() {
 
         lista.appendChild(li);
       });
-    });
+    })
+    .catch(err => console.error("Erro matches:", err));
 }
 
+// ✅ criar jogo
 function addMatch() {
+  const casa = document.getElementById("casa").value;
+  const fora = document.getElementById("fora").value;
+
+  if (!casa || !fora) {
+    alert("Preenche as equipas!");
+    return;
+  }
+
   fetch("/add-match", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      casa: casa.value,
-      fora: fora.value
-    })
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ casa, fora })
   })
+  .then(res => res.text())
   .then(() => {
-    alert("Jogo criado");
+    alert("Jogo criado ✅");
     loadMatches();
-  });
+  })
+  .catch(err => console.error("Erro criar jogo:", err));
 }
 
+// ✅ inserir palpite
 function addPrediction() {
+  const player_id = document.getElementById("playerSelect").value;
+  const match_id = document.getElementById("matchSelect").value;
+  const casa = document.getElementById("palpiteCasa").value;
+  const fora = document.getElementById("palpiteFora").value;
+
+  if (!casa || !fora) {
+    alert("Preenche o palpite!");
+    return;
+  }
+
   fetch("/add-prediction", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
-      player_id: parseInt(playerSelect.value),
-      match_id: parseInt(matchSelect.value),
-      palpite_casa: parseInt(palpiteCasa.value),
-      palpite_fora: parseInt(palpiteFora.value)
+      player_id: parseInt(player_id),
+      match_id: parseInt(match_id),
+      palpite_casa: parseInt(casa),
+      palpite_fora: parseInt(fora)
     })
   })
-  .then(() => alert("Palpite guardado"));
+  .then(() => alert("Palpite guardado ✅"))
+  .catch(err => console.error("Erro palpite:", err));
 }
 
+// ✅ inserir resultado
 function setResult() {
-  fetch("/result/" + resultMatchSelect.value, {
+  const id = document.getElementById("resultMatchSelect").value;
+  const casa = document.getElementById("resCasa").value;
+  const fora = document.getElementById("resFora").value;
+
+  if (!casa || !fora) {
+    alert("Preenche resultado!");
+    return;
+  }
+
+  fetch("/result/" + id, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
-      casa: parseInt(resCasa.value),
-      fora: parseInt(resFora.value)
+      casa: parseInt(casa),
+      fora: parseInt(fora)
     })
   })
   .then(() => {
-    alert("Resultado inserido");
+    alert("Resultado inserido ✅");
     loadMatches();
-  });
+  })
+  .catch(err => console.error("Erro resultado:", err));
 }
 
+// ✅ carregar ao abrir
 loadPlayers();
 loadMatches();
 
