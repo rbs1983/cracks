@@ -37,7 +37,7 @@
 
 <script>
 
-// ✅ carregar jogadores
+// carregar jogadores
 function loadPlayers() {
   fetch("/players")
     .then(res => res.json())
@@ -58,11 +58,10 @@ function loadPlayers() {
         li.textContent = p.nome;
         lista.appendChild(li);
       });
-    })
-    .catch(err => console.error("Erro players:", err));
+    });
 }
 
-// ✅ carregar jogos (CORRIGIDO)
+// carregar jogos (CORRIGIDO)
 function loadMatches() {
   fetch("/matches")
     .then(res => res.json())
@@ -104,44 +103,28 @@ function loadMatches() {
 
         lista.appendChild(li);
       });
-    })
-    .catch(err => console.error("Erro matches:", err));
+    });
 }
 
-// ✅ criar jogo
+// criar jogo
 function addMatch() {
   const casa = document.getElementById("casa").value;
   const fora = document.getElementById("fora").value;
-
-  if (!casa || !fora) {
-    alert("Preenche as equipas!");
-    return;
-  }
 
   fetch("/add-match", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({ equipa_casa: casa, equipa_fora: fora })
   })
-  .then(res => res.text())
-  .then(() => {
-    alert("Jogo criado ✅");
-    loadMatches();
-  })
-  .catch(err => console.error("Erro criar jogo:", err));
+  .then(() => loadMatches());
 }
 
-// ✅ inserir palpite
+// inserir palpite
 function addPrediction() {
   const player_id = document.getElementById("playerSelect").value;
   const match_id = document.getElementById("matchSelect").value;
   const casa = document.getElementById("palpiteCasa").value;
   const fora = document.getElementById("palpiteFora").value;
-
-  if (!casa || !fora) {
-    alert("Preenche o palpite!");
-    return;
-  }
 
   fetch("/add-prediction", {
     method: "POST",
@@ -152,21 +135,14 @@ function addPrediction() {
       palpite_casa: parseInt(casa),
       palpite_fora: parseInt(fora)
     })
-  })
-  .then(() => alert("Palpite guardado ✅"))
-  .catch(err => console.error("Erro palpite:", err));
+  });
 }
 
-// ✅ inserir resultado
+// inserir resultado
 function setResult() {
   const id = document.getElementById("resultMatchSelect").value;
   const casa = document.getElementById("resCasa").value;
   const fora = document.getElementById("resFora").value;
-
-  if (!casa || !fora) {
-    alert("Preenche resultado!");
-    return;
-  }
 
   fetch("/result/" + id, {
     method: "POST",
@@ -176,14 +152,10 @@ function setResult() {
       fora: parseInt(fora)
     })
   })
-  .then(() => {
-    alert("Resultado inserido ✅");
-    loadMatches();
-  })
-  .catch(err => console.error("Erro resultado:", err));
+  .then(() => loadMatches());
 }
 
-// ✅ carregar ao abrir
+// carregar ao abrir
 loadPlayers();
 loadMatches();
 
