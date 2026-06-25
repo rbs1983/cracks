@@ -39,6 +39,30 @@
         })
       }).then(() => alert("Jogo criado"));
     }
+    function addPrediction() {
+  fetch("/add-prediction", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      player_id: parseInt(player_id.value),
+      match_id: parseInt(match_id.value),
+      casa: parseInt(palpiteCasa.value),
+      fora: parseInt(palpiteFora.value)
+    })
+  }).then(() => alert("Palpite adicionado"));
+}
+
+function setResult() {
+  fetch("/result/" + resMatchId.value, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      casa: parseInt(resCasa.value),
+      fora: parseInt(resFora.value)
+    })
+  }).then(() => alert("Resultado inserido"));
+}
+``
   </script>
 <h2>Inserir palpite</h2>
 <input id="player_id" placeholder="ID jogador">
