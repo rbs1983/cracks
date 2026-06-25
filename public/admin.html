@@ -40,6 +40,18 @@
       }).then(() => alert("Jogo criado"));
     }
   </script>
+<h2>Inserir palpite</h2>
+<input id="player_id" placeholder="ID jogador">
+<input id="match_id" placeholder="ID jogo">
+<input id="palpiteCasa" placeholder="Golos casa">
+<input id="palpiteFora" placeholder="Golos fora">
+<button onclick="addPrediction()">Adicionar palpite</button>
 
+<h2>Inserir resultado real</h2>
+<input id="resMatchId" placeholder="ID jogo">
+<input id="resCasa" placeholder="Golos casa">
+<input id="resFora" placeholder="Golos fora">
+<button onclick="setResult()">Inserir resultado</button>
+  
 </body>
 </html>
