@@ -95,6 +95,25 @@ app.get("/all-predictions", async (req, res) => {
   res.json(result.rows);
 });
 
+// EDITAR PROGNÓSTICO
+app.post("/edit-prediction/:id", async (req, res) => {
+  const id = req.params.id;
+  const { palpite_casa, palpite_fora } = req.body;
+
+  try {
+    await pool.query(
+      "UPDATE predictions SET palpite_casa=$1, palpite_fora=$2 WHERE id=$3",
+      [palpite_casa, palpite_fora, id]
+    );
+
+    res.json({ message: "Prognóstico atualizado" });
+
+  } catch (err) {
+    console.error("Erro ao editar prognóstico:", err);
+    res.status(500).json({ error: "Erro ao editar prognóstico" });
+  }
+});
+
 // PROCESSAR RESULTADO
 app.post("/result/:id", async (req, res) => {
   const matchId = req.params.id;
