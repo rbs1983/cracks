@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard — Bolão</title>
+  <style>
+    body { font-family: Arial; margin: 0; padding: 0; background: #f5f5f5; }
+    header { background: #222; color: white; padding: 20px; text-align: center; font-size: 26px; }
+    nav { background: #333; padding: 10px; display: flex; gap: 20px; }
+    nav a { color: white; text-decoration: none; font-size: 18px; }
+    nav a:hover { text-decoration: underline; }
+
+    section { padding: 20px; background: white; margin: 20px; border-radius: 8px; }
+    h2 { margin-top: 0; }
+
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    th { background: #eee; }
+
+    input, select, button { padding: 6px; margin: 4px; }
+    button { cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<header>Dashboard — Bolão</header>
+
+<nav>
+  <a href="#jogos">Jogos</a>
+  <a href="#prognosticos">Prognósticos</a>
+  <a href="#pontos">Pontos por Jogo</a>
+  <a href="#ranking">Ranking</a>
+</nav>
+
+<!-- ===================== JOGOS ===================== -->
+<section id="jogos">
+  <h2>Jogos</h2>
+
+  <h3>Criar Jogo</h3>
+  <input id="casa" placeholder="Casa">
+  <input id="fora" placeholder="Fora">
+  <button onclick="addMatch()">Criar</button>
+
+  <h3>Lista de Jogos</h3>
+  <ul id="listaJogos"></ul>
+
+  <h3>Inserir Resultado</h3>
+  <select id="resultMatchSelect"></select>
+  <input id="resCasa" placeholder="Casa">
+  <input id="resFora" placeholder="Fora">
+  <button onclick="setResult()">Inserir</button>
+</section>
+
+<!-- ===================== PROGNÓSTICOS ===================== -->
+<section id="prognosticos">
+  <h2>Prognósticos</h2>
+  <table id="tabelaPrognosticos"></table>
+</section>
+
+<!-- ===================== PONTOS ===================== -->
+<section id="pontos">
+  <h2>Pontos por Jogo</h2>
+  <table id="tabelaPontos"></table>
+</section>
+
+<!-- ===================== RANKING ===================== -->
+<section id="ranking">
+  <h2>Ranking Geral</h2>
+  <table id="tabelaRanking">
+    <tr>
+      <th>Posição</th>
+      <th>Jogador</th>
+      <th>Pontos</th>
+    </tr>
+  </table>
+</section>
+
+<script>
+async function loadAll() {
+  const players = await fetch("/players").then(r => r.json());
+  const matches = await fetch("/matches").then(r => r.json());
+  const predictions = await fetch("/all-predictions").then(r => r.json());
+  const ranking = await fetch("/ranking").then(r => r.json());
+
+  // ===================== JOGOS =====================
+  const listaJogos = document.getElementById("listaJogos");
+  const resultSel = document.getElementById("resultMatchSelect");
+  listaJogos.innerHTML = "";
+  resultSel.innerHTML = "";
+
+  matches.forEach(m => {
+    const texto = `${m.equipa_casa} vs ${m.equipa_fora}`;
+    const li = document.createElement("li");
+
+    if (m.golos_casa === null) li.textContent = texto + " ⏳";
+    else li.textContent = texto + ` ✅ ${m.golos_casa}-${m.golos_fora}`;
+
+    listaJogos.appendChild(li);
+
+    const opt = document.createElement("option");
+    opt.value = m.id;
+    opt.textContent = texto;
+    resultSel.appendChild(opt);
+  });
+
+  // ===================== PROGNÓSTICOS =====================
+  const tabProg = document.getElementById("tabelaPrognosticos");
+  let header = "<tr><th>Jogador</th>";
+  matches.forEach(m => header += `<th>${m.equipa_casa} vs ${m.equipa_fora}</th>`);
+  header += "</tr>";
+  tabProg.innerHTML = header;
+
+  players.forEach(p => {
+    let row = `<tr><td>${p.nome}</td>`;
+    matches.forEach(m => {
+      const pred = predictions.find(x => x.player_id === p.id && x.match_id === m.id);
+      row += `<td>${pred ? pred.palpite_casa + "-" + pred.palpite_fora : "-"}</td>`;
+    });
+    row += "</tr>";
+    tabProg.innerHTML += row;
+  });
+
+  // ===================== PONTOS =====================
+  const tabPontos = document.getElementById("tabelaPontos");
+  let header2 = "<tr><th>Jogador</th>";
+  matches.forEach(m => header2 += `<th>${m.equipa_casa}-${m.equipa_fora}</th>`);
+  header2 += "<th>Total</th></tr>";
+  tabPontos.innerHTML = header2;
+
+  players.forEach(p => {
+    let total = 0;
+    let row = `<tr><td>${p.nome}</td>`;
+
+    matches.forEach(m => {
+      const pred = predictions.find(x => x.player_id === p.id && x.match_id === m.id);
+
+      if (!pred || m.golos_casa === null) {
+        row += "<td>-</td>";
+        return;
+      }
+
+      let pontos = 0;
+      if (pred.palpite_casa === m.golos_casa && pred.palpite_fora === m.golos_fora) pontos = 3;
+      else if ((pred.palpite_casa - pred.palpite_fora) === (m.golos_casa - m.golos_fora)) pontos = 1;
+
+      total += pontos;
+      row += `<td>${pontos}</td>`;
+    });
+
+    row += `<td><b>${total}</b></td></tr>`;
+    tabPontos.innerHTML += row;
+  });
+
+  // ===================== RANKING =====================
+  const tabRank = document.getElementById("tabelaRanking");
+  ranking.forEach((p, i) => {
+    tabRank.innerHTML += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${p.nome}</td>
+        <td>${p.pontos}</td>
+      </tr>
+    `;
+  });
+}
+
+// Criar jogo
+function addMatch() {
+  const casa = document.getElementById("casa").value;
+  const fora = document.getElementById("fora").value;
+
+  fetch("/add-match", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ equipa_casa: casa, equipa_fora: fora })
+  }).then(loadAll);
+}
+
+// Inserir resultado
+function setResult() {
+  const id = document.getElementById("resultMatchSelect").value;
+  const casa = document.getElementById("resCasa").value;
+  const fora = document.getElementById("resFora").value;
+
+  fetch("/result/" + id, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ casa: parseInt(casa), fora: parseInt(fora) })
+  }).then(loadAll);
+}
+
+loadAll();
+</script>
+
+</body>
+</html>
