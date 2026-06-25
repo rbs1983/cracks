@@ -7,14 +7,16 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-// dados em memória
-let players = [
-  { nome: "João", pontos: 3 },
-  { nome: "Pedro", pontos: 1 },
-  { nome: "Miguel", pontos: 5 }
-];
+let players = [];
 
-// rota ranking
+// adicionar jogador
+app.post("/add-player", (req, res) => {
+  const { nome } = req.body;
+  players.push({ nome, pontos: 0 });
+  res.send("ok");
+});
+
+// ranking
 app.get("/ranking", (req, res) => {
   res.json(players.sort((a, b) => b.pontos - a.pontos));
 });
