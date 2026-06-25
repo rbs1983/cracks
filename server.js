@@ -68,6 +68,29 @@ app.post("/add-player", async (req, res) => {
   }
 });
 
+// adicionar jogo
+app.post("/add-match", async (req, res) => {
+  const { casa, fora } = req.body;
+
+  try {
+    await pool.query(
+      "INSERT INTO matches(casa, fora) VALUES($1,$2)",
+      [casa, fora]
+    );
+
+    res.send("ok");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("erro");
+  }
+});
+
+// listar jogos
+app.get("/matches", async (req, res) => {
+  const result = await pool.query("SELECT * FROM matches");
+  res.json(result.rows);
+});
+``
 // ranking
 app.get("/ranking", async (req, res) => {
   try {
