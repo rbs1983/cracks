@@ -49,7 +49,7 @@ async function initDB() {
   console.log("DB pronta");
 }
 
-// Rota raiz → serve o dashboard.html
+// DASHBOARD COMO PÁGINA INICIAL
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
@@ -68,7 +68,7 @@ app.get("/ranking", async (req, res) => {
   res.json(result.rows);
 });
 
-// Listar todos os palpites (para prognósticos e pontos.html)
+// Listar todos os palpites
 app.get("/all-predictions", async (req, res) => {
   const result = await pool.query("SELECT * FROM predictions");
   res.json(result.rows);
@@ -92,7 +92,7 @@ app.get("/matches", async (req, res) => {
   res.json(result.rows);
 });
 
-// Adicionar palpite (com ON CONFLICT)
+// Adicionar palpite
 app.post("/add-prediction", async (req, res) => {
   const { player_id, match_id, palpite_casa, palpite_fora } = req.body;
 
@@ -108,12 +108,11 @@ app.post("/add-prediction", async (req, res) => {
   res.send("Palpite registado");
 });
 
-// Registar resultado e calcular pontos (só 1 vez)
+// Registar resultado e calcular pontos
 app.post("/result/:id", async (req, res) => {
   const match_id = req.params.id;
   const { casa, fora } = req.body;
 
-  // Verificar se já foi processado
   const jogo = await pool.query(
     "SELECT processado FROM matches WHERE id=$1",
     [match_id]
@@ -123,28 +122,25 @@ app.post("/result/:id", async (req, res) => {
     return res.send("Este jogo já foi processado");
   }
 
-  // Atualizar resultado
   await pool.query(
     "UPDATE matches SET golos_casa=$1, golos_fora=$2, processado=true WHERE id=$3",
     [casa, fora, match_id]
   );
 
-  // Buscar palpites
   const predictions = await pool.query(
     "SELECT * FROM predictions WHERE match_id=$1",
     [match_id]
   );
 
-  // Calcular pontos
   for (let p of predictions.rows) {
     let pontos = 0;
 
     if (p.palpite_casa === casa && p.palpite_fora === fora) {
-      pontos = 3; // resultado exato
+      pontos = 3;
     } else if (
       (p.palpite_casa - p.palpite_fora) === (casa - fora)
     ) {
-      pontos = 1; // acertou tendência
+      pontos = 1;
     }
 
     await pool.query(
