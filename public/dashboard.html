@@ -72,21 +72,11 @@
 
   <h1>Dashboard</h1>
 
-  <!-- 🔥 CARTÕES DE RESUMO -->
+  <!-- 🔥 APENAS O CARTÃO DO TOP JOGADOR -->
   <div class="card-container">
-    <div class="card">
-      <h3>Total de Jogadores</h3>
-      <p id="total-jogadores">0</p>
-    </div>
-
     <div class="card">
       <h3>Top Jogador</h3>
       <p id="top-jogador">—</p>
-    </div>
-
-    <div class="card">
-      <h3>Média de Pontos</h3>
-      <p id="media-pontos">0</p>
     </div>
   </div>
 
@@ -153,25 +143,19 @@
   </div>
 
 <script>
-  // 🔥 Atualizar cartões de resumo
+  // 🔥 Atualizar apenas o Top Jogador
   function atualizarResumoJogadores() {
     fetch("/players")
       .then(r => r.json())
       .then(players => {
-        document.getElementById("total-jogadores").textContent = players.length;
 
         if (players.length > 0) {
           const top = players.reduce((a, b) => (a.pontos > b.pontos ? a : b));
           document.getElementById("top-jogador").textContent =
             `${top.nome} (${top.pontos} pts)`;
+        } else {
+          document.getElementById("top-jogador").textContent = "—";
         }
-
-        const media =
-          players.length > 0
-            ? (players.reduce((s, p) => s + p.pontos, 0) / players.length).toFixed(1)
-            : 0;
-
-        document.getElementById("media-pontos").textContent = media;
       });
   }
 
