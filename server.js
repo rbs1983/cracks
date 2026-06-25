@@ -7,7 +7,7 @@ const { Pool } = pkg;
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // 🔥 SERVE O DASHBOARD
+app.use(express.static("public"));
 
 const PORT = process.env.PORT || 8080;
 
@@ -16,7 +16,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// 🔥 Criar tabelas
+// Criar tabelas
 async function initDB() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS players (
@@ -51,7 +51,7 @@ async function initDB() {
 }
 initDB();
 
-// 🔥 Jogadores
+// Jogadores
 app.get("/players", async (req, res) => {
   const result = await pool.query("SELECT * FROM players ORDER BY id ASC");
   res.json(result.rows);
@@ -63,7 +63,7 @@ app.post("/add-player", async (req, res) => {
   res.json({ message: "Jogador criado" });
 });
 
-// 🔥 Jogos
+// Jogos
 app.post("/add-match", async (req, res) => {
   const { equipa_casa, equipa_fora } = req.body;
   await pool.query(
@@ -78,7 +78,7 @@ app.get("/matches", async (req, res) => {
   res.json(result.rows);
 });
 
-// 🔥 Prognósticos
+// Prognósticos
 app.post("/add-prediction", async (req, res) => {
   const { player_id, match_id, palpite_casa, palpite_fora } = req.body;
 
@@ -95,66 +95,43 @@ app.get("/all-predictions", async (req, res) => {
   res.json(result.rows);
 });
 
-// 🔥 PROCESSAR RESULTADO — REGRAS 10 / 4 / 1 / 0
+// PROCESSAR RESULTADO
 app.post("/result/:id", async (req, res) => {
   const matchId = req.params.id;
 
-  const casa = parseInt(req.body.casa);
-  const fora = parseInt(req.body.fora);
+  const casa = Number(req.body.casa);
+  const fora = Number(req.body.fora);
 
   if (isNaN(casa) || isNaN(fora)) {
     return res.status(400).json({ error: "Resultado inválido" });
   }
 
   try {
-    // 1) Atualizar resultado
     await pool.query(
       "UPDATE matches SET golos_casa=$1, golos_fora=$2, processado=true WHERE id=$3",
       [casa, fora, matchId]
     );
 
-    // 2) Buscar prognósticos
     const predictions = await pool.query(
       "SELECT * FROM predictions WHERE match_id=$1",
       [matchId]
     );
 
-    // 3) Atribuir pontos
     for (const p of predictions.rows) {
-      const palpiteCasa = Number(p.palpite_casa);
-      const palpiteFora = Number(p.palpite_fora);
-
-      const diffPalpite = palpiteCasa - palpiteFora;
-      const diffReal = casa - fora;
-
-      const palpiteVencedor =
-        diffPalpite > 0 ? "casa" :
-        diffPalpite < 0 ? "fora" :
-        "empate";
-
-      const realVencedor =
-        diffReal > 0 ? "casa" :
-        diffReal < 0 ? "fora" :
-        "empate";
+      const pc = Number(p.palpite_casa);
+      const pf = Number(p.palpite_fora);
 
       let pontos = 0;
 
-      // ✔ 10 pontos — resultado exato
-      if (palpiteCasa === casa && palpiteFora === fora) {
-        pontos = 10;
-      }
+      const diffP = pc - pf;
+      const diffR = casa - fora;
 
-      // ✔ 1 ponto — acertou só um golo
-      else if (palpiteCasa === casa || palpiteFora === fora) {
-        pontos = 1;
-      }
+      const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
+      const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
 
-      // ✔ 4 pontos — acertou vencedor mas falhou golos
-      else if (palpiteVencedor === realVencedor) {
-        pontos = 4;
-      }
-
-      // 0 pontos — resto
+      if (pc === casa && pf === fora) pontos = 10;
+      else if (pc === casa || pf === fora) pontos = 1;
+      else if (vP === vR) pontos = 4;
 
       await pool.query(
         "UPDATE players SET pontos = pontos + $1 WHERE id=$2",
@@ -165,20 +142,45 @@ app.post("/result/:id", async (req, res) => {
     res.json({ message: "Resultado processado com sucesso" });
 
   } catch (err) {
-    console.error("ERRO AO PROCESSAR RESULTADO:", err);
+    console.error("Erro:", err);
     res.status(500).json({ error: "Erro ao processar resultado" });
   }
 });
 
-// 🔥 Ranking
-app.get("/ranking", async (req, res) => {
-  const result = await pool.query(
-    "SELECT * FROM players ORDER BY pontos DESC, nome ASC"
-  );
-  res.json(result.rows);
-});
+// REPROCESSAR JOGO
+app.post("/reprocess/:id", async (req, res) => {
+  const matchId = req.params.id;
 
-// 🔥 Start
-app.listen(PORT, () => {
-  console.log(`🚀 Server ON na porta ${PORT}`);
-});
+  try {
+    const predictions = await pool.query(
+      "SELECT * FROM predictions WHERE match_id=$1",
+      [matchId]
+    );
+
+    const jogo = await pool.query(
+      "SELECT golos_casa, golos_fora FROM matches WHERE id=$1",
+      [matchId]
+    );
+
+    const casa = jogo.rows[0].golos_casa;
+    const fora = jogo.rows[0].golos_fora;
+
+    // Remover pontos antigos
+    for (const p of predictions.rows) {
+      const pc = Number(p.palpite_casa);
+      const pf = Number(p.palpite_fora);
+
+      let pontos = 0;
+
+      const diffP = pc - pf;
+      const diffR = casa - fora;
+
+      const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
+      const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
+
+      if (pc === casa && pf === fora) pontos = 10;
+      else if (pc === casa || pf === fora) pontos = 1;
+      else if (vP === vR) pontos = 4;
+
+      await pool.query(
+        "UPDATE players SET pontos = pontos - $1 WHERE id
