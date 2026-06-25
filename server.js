@@ -14,7 +14,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-// ✅ Criar tabelas antes de arrancar o servidor
+// ✅ criar tabelas antes de iniciar
 async function initDB() {
   try {
     await pool.query(`
@@ -47,13 +47,26 @@ async function initDB() {
 
     console.log("✅ Tabelas prontas");
   } catch (err) {
-    console.error("Erro na DB:", err);
+    console.error("Erro DB:", err);
   }
 }
 
+//
 // ✅ ROTAS
+//
 
-// adicionar jogador
+// ✅ listar jogadores
+app.get("/players", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM players ORDER BY id");
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("erro");
+  }
+});
+
+// ✅ adicionar jogador
 app.post("/add-player", async (req, res) => {
   try {
     const { nome } = req.body;
@@ -74,12 +87,13 @@ app.post("/add-player", async (req, res) => {
   }
 });
 
-// ver ranking
+// ✅ ranking
 app.get("/ranking", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM players ORDER BY pontos DESC"
+      "SELECT nome, pontos FROM players ORDER BY pontos DESC"
     );
+
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -87,7 +101,18 @@ app.get("/ranking", async (req, res) => {
   }
 });
 
-// adicionar jogo
+// ✅ listar jogos
+app.get("/matches", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM matches ORDER BY id");
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("erro");
+  }
+});
+
+// ✅ adicionar jogo
 app.post("/add-match", async (req, res) => {
   try {
     const { casa, fora } = req.body;
@@ -108,25 +133,10 @@ app.post("/add-match", async (req, res) => {
   }
 });
 
-// listar jogos
-app.get("/matches", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM matches ORDER BY id");
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("erro");
-  }
-});
-
-// adicionar palpite
+// ✅ adicionar palpite
 app.post("/add-prediction", async (req, res) => {
   try {
     const { player_id, match_id, palpite_casa, palpite_fora } = req.body;
-
-    if (!player_id || !match_id) {
-      return res.status(400).send("IDs obrigatórios");
-    }
 
     await pool.query(
       "INSERT INTO predictions(player_id, match_id, palpite_casa, palpite_fora) VALUES($1,$2,$3,$4)",
@@ -140,7 +150,7 @@ app.post("/add-prediction", async (req, res) => {
   }
 });
 
-// inserir resultado e calcular pontos
+// ✅ inserir resultado + calcular pontos
 app.post("/result/:id", async (req, res) => {
   try {
     const { casa, fora } = req.body;
@@ -162,12 +172,10 @@ app.post("/result/:id", async (req, res) => {
 
       let pontos = 0;
 
-      // resultado real
       const real =
         casa > fora ? "casa" :
         casa < fora ? "fora" : "empate";
 
-      // palpite
       const palpite =
         p.palpite_casa > p.palpite_fora ? "casa" :
         p.palpite_casa < p.palpite_fora ? "fora" : "empate";
@@ -191,11 +199,10 @@ app.post("/result/:id", async (req, res) => {
   }
 });
 
-
-// ✅ ARRANQUE CORRETO DO SERVIDOR
-
+// ✅ iniciar servidor
 initDB().then(() => {
   app.listen(3000, () => {
     console.log("🚀 Servidor ON");
   });
 });
+``
