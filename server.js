@@ -105,7 +105,7 @@ app.post("/add-prediction", async (req, res) => {
 // Registar resultado e calcular pontos (só 1 vez)
 app.post("/result/:id", async (req, res) => {
   const match_id = req.params.id;
-  const { golos_casa, golos_fora } = req.body;
+  const { casa, fora } = req.body;
 
   // Verificar se já foi processado
   const jogo = await pool.query(
@@ -120,7 +120,7 @@ app.post("/result/:id", async (req, res) => {
   // Atualizar resultado
   await pool.query(
     "UPDATE matches SET golos_casa=$1, golos_fora=$2, processado=true WHERE id=$3",
-    [golos_casa, golos_fora, match_id]
+    [casa, fora, match_id]
   );
 
   // Buscar palpites
@@ -133,10 +133,10 @@ app.post("/result/:id", async (req, res) => {
   for (let p of predictions.rows) {
     let pontos = 0;
 
-    if (p.palpite_casa === golos_casa && p.palpite_fora === golos_fora) {
+    if (p.palpite_casa === casa && p.palpite_fora === fora) {
       pontos = 3; // resultado exato
     } else if (
-      (p.palpite_casa - p.palpite_fora) === (golos_casa - golos_fora)
+      (p.palpite_casa - p.palpite_fora) === (casa - fora)
     ) {
       pontos = 1; // acertou tendência
     }
