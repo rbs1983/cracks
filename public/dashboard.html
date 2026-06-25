@@ -218,6 +218,11 @@ function loadMatches() {
                 Reprocessar
               </button>
 
+              <button class="btn-small" style="background:#2196F3; color:white;"
+                      onclick="recalcular(${m.id})">
+                Recalcular
+              </button>
+
               <div id="inputs-${m.id}" style="display:none; margin-top:5px;">
                 <input id="res-casa-${m.id}" type="number" placeholder="Casa" style="width:60px;">
                 <input id="res-fora-${m.id}" type="number" placeholder="Fora" style="width:60px;">
@@ -257,6 +262,18 @@ function reprocessar(id) {
     .then(r => r.json())
     .then(() => {
       alert("Jogo reprocessado!");
+      loadMatches();
+      atualizarResumoJogadores();
+      loadPredictions();
+    });
+}
+
+// Recalcular jogo (novo)
+function recalcular(id) {
+  fetch(`/recalculate/${id}`, { method: "POST" })
+    .then(r => r.json())
+    .then(() => {
+      alert("Jogo recalculado!");
       loadMatches();
       atualizarResumoJogadores();
       loadPredictions();
