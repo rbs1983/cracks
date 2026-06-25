@@ -1,10 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Bolão Futebol</title>
+  <title>Ranking</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      font-size: 40px;
+    }
+
+    li {
+      font-size: 20px;
+      margin: 8px 0;
+    }
+  </style>
 </head>
 <body>
+
   <h1>🏆 Ranking</h1>
+
   <ul id="ranking"></ul>
 
   <script>
@@ -12,12 +30,23 @@
       .then(res => res.json())
       .then(data => {
         const ul = document.getElementById("ranking");
-        data.forEach(p => {
+        ul.innerHTML = "";
+
+        data.forEach((p, index) => {
           const li = document.createElement("li");
-          li.textContent = p.nome + " - " + p.pontos + " pts";
+
+          li.textContent =
+            (index + 1) + "º - " +
+            p.nome + " - " +
+            p.pontos + " pts";
+
           ul.appendChild(li);
         });
+      })
+      .catch(err => {
+        console.error(err);
       });
   </script>
+
 </body>
 </html>
