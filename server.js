@@ -114,10 +114,9 @@ app.post("/edit-prediction/:id", async (req, res) => {
   }
 });
 
-// PROCESSAR RESULTADO (REGRAS ACUMULATIVAS)
+// PROCESSAR RESULTADO (COM PROTEÇÃO + ACUMULATIVO)
 app.post("/result/:id", async (req, res) => {
   const matchId = req.params.id;
-
   const casa = Number(req.body.casa);
   const fora = Number(req.body.fora);
 
@@ -126,6 +125,16 @@ app.post("/result/:id", async (req, res) => {
   }
 
   try {
+    const jogoAtual = await pool.query(
+      "SELECT processado FROM matches WHERE id=$1",
+      [matchId]
+    );
+
+    // Já processado → não somar outra vez
+    if (jogoAtual.rows[0].processado) {
+      return res.json({ message: "Jogo já processado" });
+    }
+
     await pool.query(
       "UPDATE matches SET golos_casa=$1, golos_fora=$2, processado=true WHERE id=$3",
       [casa, fora, matchId]
@@ -142,11 +151,9 @@ app.post("/result/:id", async (req, res) => {
 
       let pontos = 0;
 
-      // 10 pontos — resultado exato
       if (pc === casa && pf === fora) {
         pontos = 10;
       } else {
-        // 4 pontos — acertou vencedor
         const diffP = pc - pf;
         const diffR = casa - fora;
 
@@ -154,8 +161,6 @@ app.post("/result/:id", async (req, res) => {
         const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
 
         if (vP === vR) pontos += 4;
-
-        // 1 ponto — acertou um golo
         if (pc === casa || pf === fora) pontos += 1;
       }
 
@@ -173,23 +178,28 @@ app.post("/result/:id", async (req, res) => {
   }
 });
 
-// REPROCESSAR JOGO (REGRAS ACUMULATIVAS)
+// REPROCESSAR JOGO (COM PROTEÇÃO + ACUMULATIVO)
 app.post("/reprocess/:id", async (req, res) => {
   const matchId = req.params.id;
 
   try {
+    const jogo = await pool.query(
+      "SELECT golos_casa, golos_fora, processado FROM matches WHERE id=$1",
+      [matchId]
+    );
+
+    // Se não estiver processado → não reprocessa
+    if (!jogo.rows[0].processado) {
+      return res.json({ message: "Jogo ainda não está processado" });
+    }
+
+    const casa = jogo.rows[0].golos_casa;
+    const fora = jogo.rows[0].golos_fora;
+
     const predictions = await pool.query(
       "SELECT * FROM predictions WHERE match_id=$1",
       [matchId]
     );
-
-    const jogo = await pool.query(
-      "SELECT golos_casa, golos_fora FROM matches WHERE id=$1",
-      [matchId]
-    );
-
-    const casa = jogo.rows[0].golos_casa;
-    const fora = jogo.rows[0].golos_fora;
 
     // Remover pontos antigos
     for (const p of predictions.rows) {
@@ -223,7 +233,7 @@ app.post("/reprocess/:id", async (req, res) => {
       [matchId]
     );
 
-    // Reprocessar
+    // Reprocessar (agora sim)
     await fetch(`http://localhost:${PORT}/result/${matchId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
