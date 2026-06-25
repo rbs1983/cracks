@@ -7,9 +7,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // serve index.html e admin.html automaticamente
+app.use(express.static("public")); // serve index.html e admin.html
 
-// ENDPOINT ROOT (evita erro 502 na Railway)
+// ENDPOINT ROOT (evita erro 502)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -91,4 +91,67 @@ app.post("/add-match", async (req, res) => {
   const { casa, fora } = req.body;
 
   await pool.query(
-    "INSERT
+    "INSERT INTO matches(casa,fora) VALUES($1,$2)",
+    [casa, fora]
+  );
+
+  res.send("ok");
+});
+
+app.post("/add-prediction", async (req, res) => {
+  const { player_id, match_id, palpite_casa, palpite_fora } = req.body;
+
+  await pool.query(
+    "INSERT INTO predictions(player_id,match_id,palpite_casa,palpite_fora) VALUES($1,$2,$3,$4)",
+    [player_id, match_id, palpite_casa, palpite_fora]
+  );
+
+  res.send("ok");
+});
+
+app.post("/result/:id", async (req, res) => {
+  const { casa, fora } = req.body;
+  const id = req.params.id;
+
+  await pool.query(
+    "UPDATE matches SET golos_casa=$1, golos_fora=$2 WHERE id=$3",
+    [casa, fora, id]
+  );
+
+  const preds = await pool.query(
+    "SELECT * FROM predictions WHERE match_id=$1",
+    [id]
+  );
+
+  for (let p of preds.rows) {
+    let pontos = 0;
+
+    const real =
+      casa > fora ? "casa" :
+      casa < fora ? "fora" : "empate";
+
+    const palpite =
+      p.palpite_casa > p.palpite_fora ? "casa" :
+      p.palpite_casa < p.palpite_fora ? "fora" : "empate";
+
+    if (p.palpite_casa == casa && p.palpite_fora == fora) {
+      pontos = 3;
+    } else if (real === palpite) {
+      pontos = 1;
+    }
+
+    await pool.query(
+      "UPDATE players SET pontos = pontos + $1 WHERE id=$2",
+      [pontos, p.player_id]
+    );
+  }
+
+  res.send("ok");
+});
+
+// PORTA COMPATÍVEL COM RAILWAY
+const PORT = process.env.PORT || 3000;
+
+initDB().then(() => {
+  app.listen(PORT, () => console.log(`🚀 Server ON na porta ${PORT}`));
+});
