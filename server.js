@@ -43,16 +43,17 @@ async function initDB() {
     );
   `);
 
-  // jogadores fixos
+  // jogadores fixos (inclui André, Mark e Gabriel)
   const jogadores = [
     "André", "João", "Pedro",
     "Miguel", "Rui", "Carlos",
-    "Bruno", "Tiago"
+    "Bruno", "Tiago",
+    "Mark", "Gabriel"
   ];
 
   for (let nome of jogadores) {
     await pool.query(
-      "INSERT INTO players(nome) VALUES($1) ON CONFLICT DO NOTHING,
+      "INSERT INTO players(nome) VALUES($1) ON CONFLICT DO NOTHING",
       [nome]
     );
   }
@@ -61,6 +62,7 @@ async function initDB() {
 }
 
 // ROTAS
+
 app.get("/players", async (req, res) => {
   const result = await pool.query("SELECT * FROM players");
   res.json(result.rows);
@@ -68,7 +70,7 @@ app.get("/players", async (req, res) => {
 
 app.get("/ranking", async (req, res) => {
   const result = await pool.query(
-    "SELECT nome,pontos FROM players ORDER BY pontos DESC"
+    "SELECT nome, pontos FROM players ORDER BY pontos DESC"
   );
   res.json(result.rows);
 });
@@ -105,7 +107,7 @@ app.post("/result/:id", async (req, res) => {
   const id = req.params.id;
 
   await pool.query(
-    "UPDATE matches SET golos_casa=$1,golos_fora=$2 WHERE id=$3",
+    "UPDATE matches SET golos_casa=$1, golos_fora=$2 WHERE id=$3",
     [casa, fora, id]
   );
 
@@ -115,7 +117,6 @@ app.post("/result/:id", async (req, res) => {
   );
 
   for (let p of preds.rows) {
-
     let pontos = 0;
 
     const real =
@@ -141,6 +142,10 @@ app.post("/result/:id", async (req, res) => {
   res.send("ok");
 });
 
+// PORTA COMPATÍVEL COM RAILWAY
+const PORT = process.env.PORT || 3000;
+
 initDB().then(() => {
-  app.listen(3000, () => console.log("🚀 Server ON"));
+  app.listen(PORT, () => console.log(`🚀 Server ON na porta ${PORT}`));
 });
+``
