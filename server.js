@@ -1,12 +1,20 @@
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
+
 const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static("public"));
+
+// ligação à base de dados
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
-``
+
+// criar tabelas automaticamente
 async function initDB() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS players (
@@ -38,85 +46,34 @@ async function initDB() {
 }
 
 initDB();
-``
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static("public"));
-
-let players = [];
-let matches = [];
-let predictions = [];
-
-// adicionar jogador
-app.post("/add-player", (req, res) => {
+// ✅ adicionar jogador
+app.post("/add-player", async (req, res) => {
   const { nome } = req.body;
-  players.push({ id: players.length + 1, nome, pontos: 0 });
-  res.send("ok");
+
+  try {
+    await pool.query(
+      "INSERT INTO players(nome) VALUES($1)",
+      [nome]
+    );
+    res.send("ok");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("erro");
+  }
 });
 
-// adicionar jogo
-app.post("/add-match", (req, res) => {
-  const { casa, fora } = req.body;
-  matches.push({
-    id: matches.length + 1,
-    casa,
-    fora,
-    resultado: null
-  });
-  res.send("ok");
-});
-
-// adicionar palpite
-app.post("/add-prediction", (req, res) => {
-  const { player_id, match_id, casa, fora } = req.body;
-
-  predictions.push({
-    player_id,
-    match_id,
-    casa,
-    fora
-  });
-
-  res.send("ok");
-});
-
-// colocar resultado real e calcular pontos
-app.post("/result/:id", (req, res) => {
-  const { casa, fora } = req.body;
-
-  const match = matches.find(m => m.id == req.params.id);
-  match.resultado = { casa, fora };
-
-  predictions.forEach(p => {
-    if (p.match_id == match.id) {
-      let pontos = 0;
-
-      if (p.casa == casa && p.fora == fora) {
-        pontos = 3;
-      } else {
-        const real =
-          casa > fora ? "casa" :
-          casa < fora ? "fora" : "empate";
-
-        const palpite =
-          p.casa > p.fora ? "casa" :
-          p.casa < p.fora ? "fora" : "empate";
-
-        if (real === palpite) pontos = 1;
-      }
-
-      const player = players.find(pl => pl.id == p.player_id);
-      player.pontos += pontos;
-    }
-  });
-
-  res.send("resultado atualizado");
-});
-
-// ranking
-app.get("/ranking", (req, res) => {
-  res.json(players.sort((a, b) => b.pontos - a.pontos));
+// ✅ ranking
+app.get("/ranking", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT nome, pontos FROM players ORDER BY pontos DESC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("erro");
+  }
 });
 
 app.listen(3000, () => {
