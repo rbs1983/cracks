@@ -7,8 +7,7 @@ const { Pool } = pkg;
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
-
+app.use(express.static("public")); // 🔥 SERVE O DASHBOARD
 
 const PORT = process.env.PORT || 8080;
 
@@ -17,7 +16,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// 🔥 Inicializar BD
+// 🔥 Criar tabelas
 async function initDB() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS players (
@@ -96,34 +95,34 @@ app.get("/all-predictions", async (req, res) => {
   res.json(result.rows);
 });
 
-// 🔥 Processar resultado com NOVAS REGRAS
+// 🔥 PROCESSAR RESULTADO — REGRAS 10 / 4 / 1 / 0
 app.post("/result/:id", async (req, res) => {
   const matchId = req.params.id;
-  const { casa, fora } = req.body;
+
+  const casa = parseInt(req.body.casa);
+  const fora = parseInt(req.body.fora);
+
+  if (isNaN(casa) || isNaN(fora)) {
+    return res.status(400).json({ error: "Resultado inválido" });
+  }
 
   try {
-    // 1) Atualizar resultado do jogo
+    // 1) Atualizar resultado
     await pool.query(
       "UPDATE matches SET golos_casa=$1, golos_fora=$2, processado=true WHERE id=$3",
       [casa, fora, matchId]
     );
 
-    // 2) Buscar prognósticos do jogo
+    // 2) Buscar prognósticos
     const predictions = await pool.query(
       "SELECT * FROM predictions WHERE match_id=$1",
       [matchId]
     );
 
-    // 3) Atribuir pontos segundo regras:
-    // - Resultado exato: 10
-    // - Acerta só um dos golos: 1
-    // - Acerta vencedor (ou empate) mas falha golos: 4
-    // - Caso contrário: 0
+    // 3) Atribuir pontos
     for (const p of predictions.rows) {
-      let pontos = 0;
-
-      const palpiteCasa = p.palpite_casa;
-      const palpiteFora = p.palpite_fora;
+      const palpiteCasa = Number(p.palpite_casa);
+      const palpiteFora = Number(p.palpite_fora);
 
       const diffPalpite = palpiteCasa - palpiteFora;
       const diffReal = casa - fora;
@@ -138,22 +137,24 @@ app.post("/result/:id", async (req, res) => {
         diffReal < 0 ? "fora" :
         "empate";
 
-      // 1) Resultado exato
+      let pontos = 0;
+
+      // ✔ 10 pontos — resultado exato
       if (palpiteCasa === casa && palpiteFora === fora) {
         pontos = 10;
       }
 
-      // 2) Acerta só um dos golos
+      // ✔ 1 ponto — acertou só um golo
       else if (palpiteCasa === casa || palpiteFora === fora) {
         pontos = 1;
       }
 
-      // 3) Acerta vencedor (inclui empate) mas falha golos
-      else if (palpiteVencedor === realVencedor && (palpiteCasa !== casa || palpiteFora !== fora)) {
+      // ✔ 4 pontos — acertou vencedor mas falhou golos
+      else if (palpiteVencedor === realVencedor) {
         pontos = 4;
       }
 
-      // 4) Caso contrário → 0
+      // 0 pontos — resto
 
       await pool.query(
         "UPDATE players SET pontos = pontos + $1 WHERE id=$2",
@@ -164,7 +165,7 @@ app.post("/result/:id", async (req, res) => {
     res.json({ message: "Resultado processado com sucesso" });
 
   } catch (err) {
-    console.error(err);
+    console.error("ERRO AO PROCESSAR RESULTADO:", err);
     res.status(500).json({ error: "Erro ao processar resultado" });
   }
 });
