@@ -104,7 +104,78 @@ app.get("/ranking", async (req, res) => {
     res.status(500).send("erro");
   }
 });
+// adicionar palpite
+app.post("/add-prediction", async (req, res) => {
+  const { player_id, match_id, casa, fora } = req.body;
 
+  try {
+    await pool.query(
+      "INSERT INTO predictions(player_id, match_id, palpite_casa, palpite_fora) VALUES($1,$2,$3,$4)",
+      [player_id, match_id, casa, fora]
+    );
+
+    res.send("ok");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("erro");
+  }
+});
+
+
+// inserir resultado e calcular pontos
+app.post("/result/:id", async (req, res) => {
+  const { casa, fora } = req.body;
+  const match_id = req.params.id;
+
+  try {
+    // atualizar resultado do jogo
+    await pool.query(
+      "UPDATE matches SET golos_casa=$1, golos_fora=$2 WHERE id=$3",
+      [casa, fora, match_id]
+    );
+
+    // buscar palpites
+    const result = await pool.query(
+      "SELECT * FROM predictions WHERE match_id=$1",
+      [match_id]
+    );
+
+    for (let p of result.rows) {
+      let pontos = 0;
+
+      // resultado real
+      const real =
+        casa > fora ? "casa" :
+        casa < fora ? "fora" : "empate";
+
+      // palpite
+      const palpite =
+        p.palpite_casa > p.palpite_fora
+          ? "casa"
+          : p.palpite_casa < p.palpite_fora
+          ? "fora"
+          : "empate";
+
+      if (p.palpite_casa == casa && p.palpite_fora == fora) {
+        pontos = 3;
+      } else if (real === palpite) {
+        pontos = 1;
+      }
+
+      // atualizar pontos do jogador
+      await pool.query(
+        "UPDATE players SET pontos = pontos + $1 WHERE id = $2",
+        [pontos, p.player_id]
+      );
+    }
+
+    res.send("resultado atualizado ✅");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("erro");
+  }
+});
+``
 app.listen(3000, () => {
   console.log("Servidor ON 🚀");
 });
