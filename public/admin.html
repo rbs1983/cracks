@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admin</title>
+  <title>Painel Admin</title>
 </head>
 <body>
 
   <h1>Painel Admin</h1>
 
-  <h2>Jogador</h2>
+  <!-- JOGADOR -->
+  <h2>Adicionar jogador</h2>
   <input id="nome" placeholder="Nome">
   <button onclick="addPlayer()">Adicionar jogador</button>
 
-  <h2>Jogo</h2>
-  <input id="casa" placeholder="Equipa Casa">
-  <input id="fora" placeholder="Equipa Fora">
+  <!-- JOGO -->
+  <h2>Criar jogo</h2>
+  <input id="casa" placeholder="Equipa casa">
+  <input id="fora" placeholder="Equipa fora">
   <button onclick="addMatch()">Adicionar jogo</button>
 
   <script>
+    // adicionar jogador
     function addPlayer() {
       fetch("/add-player", {
         method: "POST",
@@ -25,6 +28,7 @@
       }).then(() => alert("Jogador adicionado"));
     }
 
+    // adicionar jogo
     function addMatch() {
       fetch("/add-match", {
         method: "POST",
@@ -33,27 +37,9 @@
           casa: casa.value,
           fora: fora.value
         })
-      }).then(() => alert("Jogo adicionado"));
+      }).then(() => alert("Jogo criado"));
     }
   </script>
 
 </body>
 </html>
-<h2>Criar jogo</h2>
-<input id="casa" placeholder="Equipa casa">
-<input id="fora" placeholder="Equipa fora">
-<button onclick="addMatch()">Adicionar jogo</button>
-
-<script>
-function addMatch() {
-  fetch("/add-match", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      casa: casa.value,
-      fora: fora.value
-    })
-  }).then(() => alert("Jogo criado!"));
-}
-</script>
-``
