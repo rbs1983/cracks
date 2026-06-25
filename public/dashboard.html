@@ -337,7 +337,7 @@ function guardarEdicao() {
   });
 }
 
-// Carregar prognósticos
+// Carregar prognósticos (LÓGICA ACUMULATIVA)
 function loadPredictions() {
   Promise.all([
     fetch("/all-predictions").then(r => r.json()),
@@ -365,16 +365,24 @@ function loadPredictions() {
         const rc = jogo.golos_casa;
         const rf = jogo.golos_fora;
 
-        const diffP = pc - pf;
-        const diffR = rc - rf;
+        pontos = 0;
 
-        const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
-        const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
+        // 10 pontos — exato
+        if (pc === rc && pf === rf) {
+          pontos = 10;
+        } else {
+          // 4 pontos — vencedor
+          const diffP = pc - pf;
+          const diffR = rc - rf;
 
-        if (pc === rc && pf === rf) pontos = 10;
-        else if (pc === rc || pf === rf) pontos = 1;
-        else if (vP === vR) pontos = 4;
-        else pontos = 0;
+          const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
+          const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
+
+          if (vP === vR) pontos += 4;
+
+          // 1 ponto — acertou um golo
+          if (pc === rc || pf === rf) pontos += 1;
+        }
       }
 
       tabela.innerHTML += `
