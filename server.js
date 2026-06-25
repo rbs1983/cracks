@@ -52,7 +52,7 @@ async function initDB() {
 
   for (let nome of jogadores) {
     await pool.query(
-      "INSERT INTO players(nome) VALUES($1) ON CONFLICT (nome) DO NOTHING",
+      "INSERT INTO players(nome) VALUES($1) ON CONFLICT DO NOTHING,
       [nome]
     );
   }
