@@ -80,12 +80,11 @@
     </div>
   </div>
 
-  <!-- 🔥 BOTÃO PARA CLASSIFICAÇÃO FINAL -->
   <button onclick="window.location.href='ranking.html'" style="margin-bottom:20px;">
     Ver Classificação Final
   </button>
 
-  <!-- 🔥 CRIAR JOGO -->
+  <!-- Criar jogo -->
   <div class="section">
     <h2>Criar Jogo</h2>
     <input id="casa" placeholder="Equipa da casa">
@@ -93,7 +92,7 @@
     <button onclick="addMatch()">Criar</button>
   </div>
 
-  <!-- 🔥 INSERIR PROGNÓSTICO -->
+  <!-- Inserir Prognóstico -->
   <div class="section">
     <h2>Inserir Prognóstico</h2>
 
@@ -106,7 +105,7 @@
     <button onclick="addPrediction()">Guardar Prognóstico</button>
   </div>
 
-  <!-- 🔥 LISTA DE JOGOS -->
+  <!-- Lista de Jogos -->
   <div class="section">
     <h2>Jogos</h2>
     <table>
@@ -124,7 +123,7 @@
     </table>
   </div>
 
-  <!-- 🔥 PROGNÓSTICOS -->
+  <!-- Prognósticos -->
   <div class="section">
     <h2>Prognósticos</h2>
 
@@ -143,12 +142,11 @@
   </div>
 
 <script>
-  // 🔥 Atualizar apenas o Top Jogador
+  // Atualizar Top Jogador
   function atualizarResumoJogadores() {
     fetch("/players")
       .then(r => r.json())
       .then(players => {
-
         if (players.length > 0) {
           const top = players.reduce((a, b) => (a.pontos > b.pontos ? a : b));
           document.getElementById("top-jogador").textContent =
@@ -159,7 +157,7 @@
       });
   }
 
-  // 🔥 Criar jogo
+  // Criar jogo
   function addMatch() {
     const casa = document.getElementById("casa").value;
     const fora = document.getElementById("fora").value;
@@ -176,7 +174,7 @@
     });
   }
 
-  // 🔥 Carregar jogos
+  // Carregar jogos
   function loadMatches() {
     fetch("/matches")
       .then(r => r.json())
@@ -194,6 +192,12 @@
               <td>${m.processado ? "Sim" : "Não"}</td>
               <td>
                 <button class="btn-small" onclick="mostrarInputs(${m.id})">Inserir Resultado</button>
+
+                <button class="btn-small" style="background:#ff9800; color:white;"
+                        onclick="reprocessar(${m.id})">
+                  Reprocessar
+                </button>
+
                 <div id="inputs-${m.id}" style="display:none; margin-top:5px;">
                   <input id="res-casa-${m.id}" type="number" placeholder="Casa" style="width:60px;">
                   <input id="res-fora-${m.id}" type="number" placeholder="Fora" style="width:60px;">
@@ -210,7 +214,7 @@
     document.getElementById(`inputs-${id}`).style.display = "block";
   }
 
-  // 🔥 Guardar resultado
+  // Guardar resultado
   function guardarResultado(id) {
     const casa = parseInt(document.getElementById(`res-casa-${id}`).value);
     const fora = parseInt(document.getElementById(`res-fora-${id}`).value);
@@ -227,7 +231,19 @@
     });
   }
 
-  // 🔥 Carregar jogadores no dropdown
+  // 🔥 Reprocessar jogo
+  function reprocessar(id) {
+    fetch(`/reprocess/${id}`, { method: "POST" })
+      .then(r => r.json())
+      .then(() => {
+        alert("Jogo reprocessado!");
+        loadMatches();
+        atualizarResumoJogadores();
+        loadPredictions();
+      });
+  }
+
+  // Carregar jogadores
   function loadPlayers() {
     fetch("/players")
       .then(r => r.json())
@@ -240,7 +256,7 @@
       });
   }
 
-  // 🔥 Carregar jogos no dropdown de prognósticos
+  // Carregar jogos para prognósticos
   function loadMatchesForPredictions() {
     fetch("/matches")
       .then(r => r.json())
@@ -255,7 +271,7 @@
       });
   }
 
-  // 🔥 Guardar prognóstico
+  // Guardar prognóstico
   function addPrediction() {
     const player_id = document.getElementById("player-select").value;
     const match_id = document.getElementById("match-select").value;
@@ -274,7 +290,7 @@
     });
   }
 
-  // 🔥 Carregar prognósticos
+  // Carregar prognósticos
   function loadPredictions() {
     Promise.all([
       fetch("/all-predictions").then(r => r.json()),
@@ -295,16 +311,23 @@
             : "-";
 
         let pontos = "-";
+
         if (jogo.processado) {
-          if (p.palpite_casa === jogo.golos_casa && p.palpite_fora === jogo.golos_fora) {
-            pontos = 3;
-          } else if (
-            (p.palpite_casa - p.palpite_fora) === (jogo.golos_casa - jogo.golos_fora)
-          ) {
-            pontos = 1;
-          } else {
-            pontos = 0;
-          }
+          const pc = p.palpite_casa;
+          const pf = p.palpite_fora;
+          const rc = jogo.golos_casa;
+          const rf = jogo.golos_fora;
+
+          const diffP = pc - pf;
+          const diffR = rc - rf;
+
+          const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
+          const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
+
+          if (pc === rc && pf === rf) pontos = 10;
+          else if (pc === rc || pf === rf) pontos = 1;
+          else if (vP === vR) pontos = 4;
+          else pontos = 0;
         }
 
         tabela.innerHTML += `
@@ -320,7 +343,7 @@
     });
   }
 
-  // 🔥 Inicializar dashboard
+  // Inicializar dashboard
   window.onload = () => {
     loadMatches();
     atualizarResumoJogadores();
