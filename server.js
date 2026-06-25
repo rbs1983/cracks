@@ -188,7 +188,6 @@ app.post("/reprocess/:id", async (req, res) => {
       [matchId]
     );
 
-    // Se não estiver processado → não reprocessa
     if (!jogo.rows[0].processado) {
       return res.json({ message: "Jogo ainda não está processado" });
     }
@@ -233,7 +232,7 @@ app.post("/reprocess/:id", async (req, res) => {
       [matchId]
     );
 
-    // Reprocessar (agora sim)
+    // Reprocessar
     await fetch(`http://localhost:${PORT}/result/${matchId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -245,6 +244,91 @@ app.post("/reprocess/:id", async (req, res) => {
   } catch (err) {
     console.error("Erro ao reprocessar:", err);
     res.status(500).json({ error: "Erro ao reprocessar jogo" });
+  }
+});
+
+// RECALCULAR APENAS UM JOGO (SEM RESET GLOBAL)
+app.post("/recalculate/:id", async (req, res) => {
+  const matchId = req.params.id;
+
+  try {
+    const jogo = await pool.query(
+      "SELECT golos_casa, golos_fora, processado FROM matches WHERE id=$1",
+      [matchId]
+    );
+
+    if (jogo.rows.length === 0) {
+      return res.status(404).json({ error: "Jogo não encontrado" });
+    }
+
+    const { golos_casa: casa, golos_fora: fora, processado } = jogo.rows[0];
+
+    if (!processado) {
+      return res.json({ message: "Jogo ainda não está processado" });
+    }
+
+    const predictions = await pool.query(
+      "SELECT * FROM predictions WHERE match_id=$1",
+      [matchId]
+    );
+
+    // 1) Remover pontos antigos
+    for (const p of predictions.rows) {
+      const pc = Number(p.palpite_casa);
+      const pf = Number(p.palpite_fora);
+
+      let pontos = 0;
+
+      if (pc === casa && pf === fora) {
+        pontos = 10;
+      } else {
+        const diffP = pc - pf;
+        const diffR = casa - fora;
+
+        const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
+        const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
+
+        if (vP === vR) pontos += 4;
+        if (pc === casa || pf === fora) pontos += 1;
+      }
+
+      await pool.query(
+        "UPDATE players SET pontos = pontos - $1 WHERE id=$2",
+        [pontos, p.player_id]
+      );
+    }
+
+    // 2) Recalcular com lógica atual
+    for (const p of predictions.rows) {
+      const pc = Number(p.palpite_casa);
+      const pf = Number(p.palpite_fora);
+
+      let pontos = 0;
+
+      if (pc === casa && pf === fora) {
+        pontos = 10;
+      } else {
+        const diffP = pc - pf;
+        const diffR = casa - fora;
+
+        const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
+        const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
+
+        if (vP === vR) pontos += 4;
+        if (pc === casa || pf === fora) pontos += 1;
+      }
+
+      await pool.query(
+        "UPDATE players SET pontos = pontos + $1 WHERE id=$2",
+        [pontos, p.player_id]
+      );
+    }
+
+    res.json({ message: "Jogo recalculado com sucesso" });
+
+  } catch (err) {
+    console.error("Erro ao recalcular jogo:", err);
+    res.status(500).json({ error: "Erro ao recalcular jogo" });
   }
 });
 
