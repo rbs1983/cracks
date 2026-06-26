@@ -2,180 +2,129 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <title>Craks da Bola</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Liga Portuguesa - Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      height: 100vh;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+
+    .sidebar {
+      width: 240px;
+      background: #020617;
+      border-right: 1px solid #1f2937;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .sidebar-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #f97316; /* destaque para "Liga Portuguesa" */
+    }
+
+    .menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .menu-item {
+      margin-bottom: 10px;
+    }
+
+    .menu-link {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      color: #e5e7eb;
+      background: transparent;
+      transition: background 0.15s, color 0.15s;
+      cursor: pointer;
+    }
+
+    .menu-link:hover {
+      background: #1f2937;
+    }
+
+    .menu-link.active {
+      background: #2563eb;
+      color: #f9fafb;
+    }
+
+    .content {
+      flex: 1;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    .content h1 {
+      margin-top: 0;
+    }
+  </style>
 </head>
-
 <body>
+  <aside class="sidebar">
+    <div class="sidebar-title">Liga Portuguesa</div>
+    <ul class="menu">
+      <li class="menu-item">
+        <a href="#" class="menu-link active" data-section="classificacao">Classificação</a>
+      </li>
+      <li class="menu-item">
+        <a href="#" class="menu-link" data-section="jogos">Jogos</a>
+      </li>
+      <li class="menu-item">
+        <a href="#" class="menu-link" data-section="palpites">Palpites</a>
+      </li>
+    </ul>
+  </aside>
 
-<div class="sidebar">
-  <h2>Craks da Bola</h2>
-  <ul>
-    <li onclick="mostrarSecao('home')">🏠 Home</li>
-    <li onclick="mostrarSecao('jogos')">Jogos</li>
-    <li onclick="mostrarSecao('prognosticos')">Prognósticos</li>
-  </ul>
-</div>
+  <main class="content" id="content">
+    <h1>Classificação</h1>
+    <p>Aqui vais mostrar a tabela da Liga Portuguesa.</p>
+  </main>
 
-<div class="content">
+  <script>
+    const links = document.querySelectorAll(".menu-link");
+    const content = document.getElementById("content");
 
-  <div id="home">
-    <h1>Craks da Bola</h1>
-    <p>Bem-vindo ao painel principal.</p>
-  </div>
+    const sections = {
+      classificacao: {
+        title: "Classificação",
+        text: "Aqui vais mostrar a tabela da Liga Portuguesa."
+      },
+      jogos: {
+        title: "Jogos",
+        text: "Lista de jogos, resultados e próximos encontros."
+      },
+      palpites: {
+        title: "Palpites",
+        text: "Zona de palpites, previsões e estatísticas."
+      }
+    };
 
-  <div class="section" id="jogos">
-    <h2>Jogos</h2>
+    links.forEach(link => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
 
-    <input id="casa" placeholder="Equipa da casa">
-    <input id="fora" placeholder="Equipa de fora">
-    <button onclick="addMatch()">Criar Jogo</button>
+        links.forEach(l => l.classList.remove("active"));
+        link.classList.add("active");
 
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Casa</th>
-          <th>Fora</th>
-          <th>Resultado</th>
-          <th>Processado</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="tabela-jogos"></tbody>
-    </table>
-  </div>
+        const sectionKey = link.dataset.section;
+        const section = sections[sectionKey];
 
-  <div class="section" id="prognosticos">
-    <h2>Prognósticos</h2>
-
-    <select id="player-select"></select>
-    <select id="match-select"></select>
-
-    <input id="palpite-casa" type="number" placeholder="Golos casa">
-    <input id="palpite-fora" type="number" placeholder="Golos fora">
-
-    <button onclick="addPrediction()">Guardar Prognóstico</button>
-
-    <h3>Prognósticos</h3>
-    <div id="lista-prognosticos"></div>
-  </div>
-
-</div>
-
-<script>
-function mostrarSecao(secao) {
-  document.getElementById("home").style.display = "none";
-  document.getElementById("jogos").style.display = "none";
-  document.getElementById("prognosticos").style.display = "none";
-  document.getElementById(secao).style.display = "block";
-}
-
-function addMatch() {
-  const casa = document.getElementById("casa").value;
-  const fora = document.getElementById("fora").value;
-
-  fetch("/add-match", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ equipa_casa: casa, equipa_fora: fora })
-  }).then(loadMatches);
-}
-
-function loadMatches() {
-  fetch("/matches")
-    .then(r => r.json())
-    .then(matches => {
-      const tabela = document.getElementById("tabela-jogos");
-      tabela.innerHTML = "";
-
-      matches.forEach(m => {
-        tabela.innerHTML += `
-          <tr>
-            <td>${m.id}</td>
-            <td>${m.equipa_casa}</td>
-            <td>${m.equipa_fora}</td>
-            <td>${m.golos_casa ?? "-"} : ${m.golos_fora ?? "-"}</td>
-            <td>${m.processado ? "Sim" : "Não"}</td>
-            <td>
-              <button onclick="inserirResultado(${m.id})">Inserir Resultado</button>
-            </td>
-          </tr>
+        content.innerHTML = `
+          <h1>${section.title}</h1>
+          <p>${section.text}</p>
         `;
       });
-
-      loadMatchesForPredictions();
     });
-}
-
-function inserirResultado(id) {
-  const casa = prompt("Golos casa:");
-  const fora = prompt("Golos fora:");
-
-  fetch(`/result/${id}`, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ casa, fora })
-  }).then(() => {
-    loadMatches();
-    loadPredictions();
-  });
-}
-
-function loadPlayers() {
-  fetch("/players")
-    .then(r => r.json())
-    .then(players => {
-      const sel = document.getElementById("player-select");
-      sel.innerHTML = "";
-      players.forEach(p => {
-        sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
-      });
-    });
-}
-
-function loadMatchesForPredictions() {
-  fetch("/matches")
-    .then(r => r.json())
-    .then(matches => {
-      const sel = document.getElementById("match-select");
-      sel.innerHTML = "";
-      matches.forEach(m => {
-        sel.innerHTML += `<option value="${m.id}">${m.equipa_casa} vs ${m.equipa_fora}</option>`;
-      });
-    });
-}
-
-function addPrediction() {
-  const player_id = document.getElementById("player-select").value;
-  const match_id = document.getElementById("match-select").value;
-  const palpite_casa = document.getElementById("palpite-casa").value;
-  const palpite_fora = document.getElementById("palpite-fora").value;
-
-  fetch("/add-prediction", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ player_id, match_id, palpite_casa, palpite_fora })
-  }).then(loadPredictions);
-}
-
-function loadPredictions() {
-  fetch("/all-predictions")
-    .then(r => r.json())
-    .then(preds => {
-      const div = document.getElementById("lista-prognosticos");
-      div.innerHTML = "";
-      preds.forEach(p => {
-        div.innerHTML += `<p>Jogador ${p.player_id} → ${p.palpite_casa}-${p.palpite_fora}</p>`;
-      });
-    });
-}
-
-loadPlayers();
-loadMatches();
-loadPredictions();
-mostrarSecao("home");
-</script>
-
+  </script>
 </body>
 </html>
