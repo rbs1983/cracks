@@ -95,6 +95,11 @@
     Ver Classificação Final
   </button>
 
+  <!-- ⭐ NOVO BOTÃO -->
+  <button onclick="recalcularTudo()" style="margin-bottom:20px; background:#4CAF50; color:white;">
+    Recalcular Tudo
+  </button>
+
   <div class="section">
     <h2>Criar Jogo</h2>
     <input id="casa" placeholder="Equipa da casa">
@@ -161,6 +166,18 @@
 <script>
 
 let editId = null;
+
+// ⭐ NOVA FUNÇÃO — Recalcular Tudo
+function recalcularTudo() {
+  fetch("/recalculate-all", { method: "POST" })
+    .then(r => r.json())
+    .then(() => {
+      alert("Pontuação recalculada com sucesso!");
+      loadMatches();
+      loadPredictions();
+      atualizarResumoJogadores();
+    });
+}
 
 // Atualizar Top Jogador
 function atualizarResumoJogadores() {
@@ -268,7 +285,7 @@ function reprocessar(id) {
     });
 }
 
-// Recalcular jogo (novo)
+// Recalcular jogo individual
 function recalcular(id) {
   fetch(`/recalculate/${id}`, { method: "POST" })
     .then(r => r.json())
@@ -354,7 +371,7 @@ function guardarEdicao() {
   });
 }
 
-// Carregar prognósticos (LÓGICA ACUMULATIVA)
+// Carregar prognósticos
 function loadPredictions() {
   Promise.all([
     fetch("/all-predictions").then(r => r.json()),
@@ -384,11 +401,9 @@ function loadPredictions() {
 
         pontos = 0;
 
-        // 10 pontos — exato
         if (pc === rc && pf === rf) {
           pontos = 10;
         } else {
-          // 4 pontos — vencedor
           const diffP = pc - pf;
           const diffR = rc - rf;
 
@@ -396,8 +411,6 @@ function loadPredictions() {
           const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
 
           if (vP === vR) pontos += 4;
-
-          // 1 ponto — acertou um golo
           if (pc === rc || pf === rf) pontos += 1;
         }
       }
