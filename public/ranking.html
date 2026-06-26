@@ -2,7 +2,8 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <title>Ranking</title>
+  <title>Classificação Final</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,6 +12,14 @@
     }
 
     h1 {
+      margin-bottom: 20px;
+    }
+
+    .section {
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
 
@@ -36,48 +45,65 @@
     }
   </style>
 </head>
+
 <body>
 
-  <h1>Classificação</h1>
+  <h1>Classificação Final</h1>
 
-  <button onclick="window.location.href='dashboard.html'">
-    Voltar ao Dashboard
+  <button onclick="window.location.href='dashboard.html'">Voltar ao Dashboard</button>
+
+  <!-- ⭐ NOVO BOTÃO -->
+  <button onclick="recalcularTudo()" style="background:#4CAF50; color:white;">
+    Recalcular Tudo
   </button>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Posição</th>
-        <th>Jogador</th>
-        <th>Pontos</th>
-      </tr>
-    </thead>
-    <tbody id="tabela-ranking"></tbody>
-  </table>
+  <div class="section">
+    <h2>Ranking</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Posição</th>
+          <th>Jogador</th>
+          <th>Pontos</th>
+        </tr>
+      </thead>
+      <tbody id="ranking-table"></tbody>
+    </table>
+  </div>
 
 <script>
-function loadRanking() {
-  fetch("/ranking")
-    .then(r => r.json())
-    .then(players => {
-      const tabela = document.getElementById("tabela-ranking");
-      tabela.innerHTML = "";
-
-      players.forEach((p, idx) => {
-        tabela.innerHTML += `
-          <tr>
-            <td>${idx + 1}</td>
-            <td>${p.nome}</td>
-            <td>${p.pontos}</td>
-          </tr>
-        `;
+  // ⭐ Recalcular tudo
+  function recalcularTudo() {
+    fetch("/recalculate-all", { method: "POST" })
+      .then(r => r.json())
+      .then(() => {
+        alert("Pontuação recalculada!");
+        loadRanking();
       });
-    });
-}
+  }
 
-window.onload = () => {
-  loadRanking();
-};
+  // Carregar ranking
+  function loadRanking() {
+    fetch("/ranking")
+      .then(r => r.json())
+      .then(ranking => {
+        const tabela = document.getElementById("ranking-table");
+        tabela.innerHTML = "";
+
+        ranking.forEach((p, index) => {
+          tabela.innerHTML += `
+            <tr>
+              <td>${index + 1}º</td>
+              <td>${p.nome}</td>
+              <td>${p.pontos}</td>
+            </tr>
+          `;
+        });
+      });
+  }
+
+  window.onload = loadRanking;
 </script>
 
 </body>
