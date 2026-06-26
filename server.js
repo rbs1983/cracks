@@ -130,7 +130,6 @@ app.post("/result/:id", async (req, res) => {
       [matchId]
     );
 
-    // Já processado → não somar outra vez
     if (jogoAtual.rows[0].processado) {
       return res.json({ message: "Jogo já processado" });
     }
@@ -178,7 +177,7 @@ app.post("/result/:id", async (req, res) => {
   }
 });
 
-// REPROCESSAR JOGO (COM PROTEÇÃO + ACUMULATIVO)
+// REPROCESSAR JOGO
 app.post("/reprocess/:id", async (req, res) => {
   const matchId = req.params.id;
 
@@ -200,7 +199,6 @@ app.post("/reprocess/:id", async (req, res) => {
       [matchId]
     );
 
-    // Remover pontos antigos
     for (const p of predictions.rows) {
       const pc = Number(p.palpite_casa);
       const pf = Number(p.palpite_fora);
@@ -226,13 +224,11 @@ app.post("/reprocess/:id", async (req, res) => {
       );
     }
 
-    // Marcar como não processado
     await pool.query(
       "UPDATE matches SET processado=false WHERE id=$1",
       [matchId]
     );
 
-    // Reprocessar
     await fetch(`http://localhost:${PORT}/result/${matchId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -247,7 +243,7 @@ app.post("/reprocess/:id", async (req, res) => {
   }
 });
 
-// RECALCULAR APENAS UM JOGO (SEM RESET GLOBAL)
+// RECALCULAR APENAS UM JOGO
 app.post("/recalculate/:id", async (req, res) => {
   const matchId = req.params.id;
 
@@ -272,7 +268,6 @@ app.post("/recalculate/:id", async (req, res) => {
       [matchId]
     );
 
-    // 1) Remover pontos antigos
     for (const p of predictions.rows) {
       const pc = Number(p.palpite_casa);
       const pf = Number(p.palpite_fora);
@@ -298,7 +293,6 @@ app.post("/recalculate/:id", async (req, res) => {
       );
     }
 
-    // 2) Recalcular com lógica atual
     for (const p of predictions.rows) {
       const pc = Number(p.palpite_casa);
       const pf = Number(p.palpite_fora);
@@ -329,6 +323,58 @@ app.post("/recalculate/:id", async (req, res) => {
   } catch (err) {
     console.error("Erro ao recalcular jogo:", err);
     res.status(500).json({ error: "Erro ao recalcular jogo" });
+  }
+});
+
+// RECALCULAR TUDO (RESET INTELIGENTE)
+app.post("/recalculate-all", async (req, res) => {
+  try {
+    await pool.query("UPDATE players SET pontos = 0");
+
+    const jogos = await pool.query(
+      "SELECT * FROM matches WHERE processado = true ORDER BY id ASC"
+    );
+
+    for (const jogo of jogos.rows) {
+      const casa = jogo.golos_casa;
+      const fora = jogo.golos_fora;
+
+      const predictions = await pool.query(
+        "SELECT * FROM predictions WHERE match_id=$1",
+        [jogo.id]
+      );
+
+      for (const p of predictions.rows) {
+        const pc = Number(p.palpite_casa);
+        const pf = Number(p.palpite_fora);
+
+        let pontos = 0;
+
+        if (pc === casa && pf === fora) {
+          pontos = 10;
+        } else {
+          const diffP = pc - pf;
+          const diffR = casa - fora;
+
+          const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
+          const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
+
+          if (vP === vR) pontos += 4;
+          if (pc === casa || pf === fora) pontos += 1;
+        }
+
+        await pool.query(
+          "UPDATE players SET pontos = pontos + $1 WHERE id=$2",
+          [pontos, p.player_id]
+        );
+      }
+    }
+
+    res.json({ message: "Pontuação recalculada com sucesso!" });
+
+  } catch (err) {
+    console.error("Erro ao recalcular tudo:", err);
+    res.status(500).json({ error: "Erro ao recalcular tudo" });
   }
 });
 
