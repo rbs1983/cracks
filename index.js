@@ -40,3 +40,14 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Servidor a correr na porta ${PORT}`);
 });
+app.get("/classificacao", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM classificacao_jogadores ORDER BY pontos_totais DESC, acertos_exatos DESC;"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao obter classificação' });
+  }
+});
