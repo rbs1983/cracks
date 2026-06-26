@@ -2,82 +2,59 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <title>Ranking - Craks da Bola</title>
+  <title>Classificação - Craks da Bola</title>
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<!-- ⭐ SIDEBAR FUTURISTA -->
-<div class="sidebar">
-
-  <h2>Craks da Bola</h2>
-  <ul>
-    <li onclick="window.location.href='dashboard.html'">🏠 Craks da Bola</li>
-  </ul>
-
-  <h2>Liga Portuguesa</h2>
-  <ul>
-    <li onclick="window.location.href='ranking.html'">Classificação</li>
-    <li onclick="window.location.href='dashboard.html#jogos'">Jogos</li>
-    <li onclick="window.location.href='dashboard.html#prognosticos'">Prognósticos</li>
-  </ul>
-
-</div>
-
-<!-- ⭐ CONTEÚDO PRINCIPAL -->
 <div class="content">
 
   <h1>Classificação Geral</h1>
 
-  <p style="margin-bottom:20px;">
-    Ranking atualizado automaticamente com base nos prognósticos processados.
-  </p>
+  <button onclick="recalcularTudo()" style="margin-bottom:20px; padding:10px 20px; background:#007bff; color:white; border:none; cursor:pointer;">
+    Recalcular Tudo
+  </button>
 
   <table>
     <thead>
       <tr>
-        <th>Posição</th>
         <th>Jogador</th>
         <th>Pontos</th>
       </tr>
     </thead>
-    <tbody id="ranking-table"></tbody>
+    <tbody id="ranking-body"></tbody>
   </table>
 
 </div>
 
 <script>
-
-// ⭐ CARREGAR RANKING
 function loadRanking() {
   fetch("/players")
     .then(r => r.json())
     .then(players => {
+      const body = document.getElementById("ranking-body");
+      body.innerHTML = "";
 
-      // Ordenar por pontos (descendente)
-      players.sort((a, b) => b.pontos - a.pontos);
-
-      const tabela = document.getElementById("ranking-table");
-      tabela.innerHTML = "";
-
-      players.forEach((p, index) => {
-        tabela.innerHTML += `
-          <tr>
-            <td>${index + 1}</td>
-            <td>${p.nome}</td>
-            <td>${p.pontos}</td>
-          </tr>
-        `;
-      });
+      players
+        .sort((a, b) => b.pontos - a.pontos)
+        .forEach(p => {
+          body.innerHTML += `
+            <tr>
+              <td>${p.nome}</td>
+              <td>${p.pontos}</td>
+            </tr>
+          `;
+        });
     });
 }
 
-// ⭐ INICIALIZAR
-window.onload = () => {
-  loadRanking();
-};
+function recalcularTudo() {
+  fetch("/recalculate-all", { method: "POST" })
+    .then(() => loadRanking());
+}
 
+window.onload = loadRanking;
 </script>
 
 </body>
