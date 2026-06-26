@@ -8,54 +8,27 @@
 
 <body>
 
-<!-- SIDEBAR -->
 <div class="sidebar">
-
   <h2>Craks da Bola</h2>
   <ul>
-    <li onclick="mostrarSecao('home')">🏠 Craks da Bola</li>
-  </ul>
-
-  <h2>Liga Portuguesa</h2>
-  <ul>
-    <li onclick="window.location.href='ranking.html'">Classificação</li>
+    <li onclick="mostrarSecao('home')">🏠 Home</li>
     <li onclick="mostrarSecao('jogos')">Jogos</li>
     <li onclick="mostrarSecao('prognosticos')">Prognósticos</li>
   </ul>
-
 </div>
 
-<!-- CONTEÚDO -->
 <div class="content">
 
-  <!-- HOME -->
   <div id="home">
     <h1>Craks da Bola</h1>
-
-    <div class="card-container">
-      <div class="card">
-        <h3>Top Jogador</h3>
-        <p id="top-jogador">—</p>
-      </div>
-    </div>
-
-    <p style="font-size:18px; margin-top:20px;">
-      Bem-vindo ao painel principal Craks da Bola.  
-      Use o menu à esquerda para navegar pela Liga Portuguesa.
-    </p>
+    <p>Bem-vindo ao painel principal.</p>
   </div>
 
-  <!-- JOGOS -->
   <div class="section" id="jogos">
     <h2>Jogos</h2>
 
     <input id="casa" placeholder="Equipa da casa">
     <input id="fora" placeholder="Equipa de fora">
-
-    <select id="jornada-select">
-      <option value="">Jornada...</option>
-    </select>
-
     <button onclick="addMatch()">Criar Jogo</button>
 
     <table>
@@ -64,7 +37,6 @@
           <th>ID</th>
           <th>Casa</th>
           <th>Fora</th>
-          <th>Jornada</th>
           <th>Resultado</th>
           <th>Processado</th>
           <th>Ações</th>
@@ -74,108 +46,46 @@
     </table>
   </div>
 
-  <!-- PROGNÓSTICOS -->
   <div class="section" id="prognosticos">
     <h2>Prognósticos</h2>
 
     <select id="player-select"></select>
     <select id="match-select"></select>
 
-    <input id="palpite-casa" type="number" placeholder="Golos casa" style="width:120px;">
-    <input id="palpite-fora" type="number" placeholder="Golos fora" style="width:120px;">
+    <input id="palpite-casa" type="number" placeholder="Golos casa">
+    <input id="palpite-fora" type="number" placeholder="Golos fora">
 
     <button onclick="addPrediction()">Guardar Prognóstico</button>
 
-    <h3 style="margin-top:30px;">Prognósticos por Jornada</h3>
-
-    <label>Selecionar Jornada:</label>
-    <select id="select-jornada" onchange="mostrarJornada()"></select>
-
-    <div id="matrizes-jornadas"></div>
+    <h3>Prognósticos</h3>
+    <div id="lista-prognosticos"></div>
   </div>
 
 </div>
 
-<!-- POPUP EDITAR -->
-<div id="edit-box">
-  <h3>Editar Prognóstico</h3>
-  <input id="edit-casa" type="number" placeholder="Golos casa">
-  <input id="edit-fora" type="number" placeholder="Golos fora">
-  <br><br>
-  <button onclick="guardarEdicao()">Guardar</button>
-  <button onclick="fecharEdicao()">Cancelar</button>
-</div>
 <script>
-let editId = null;
-let cachePlayers = [];
-let cacheMatches = [];
-let cachePredictions = [];
-
-// ===============================
-// CONTROLO DE SECÇÕES
-// ===============================
 function mostrarSecao(secao) {
   document.getElementById("home").style.display = "none";
   document.getElementById("jogos").style.display = "none";
   document.getElementById("prognosticos").style.display = "none";
-
   document.getElementById(secao).style.display = "block";
 }
 
-// ===============================
-// RESUMO TOP JOGADOR
-// ===============================
-function atualizarResumoJogadores() {
-  fetch("/players")
-    .then(r => r.json())
-    .then(players => {
-      cachePlayers = players;
-      if (players.length > 0) {
-        const top = players.reduce((a, b) => (a.pontos > b.pontos ? a : b));
-        document.getElementById("top-jogador").textContent =
-          `${top.nome} (${top.pontos} pts)`;
-      } else {
-        document.getElementById("top-jogador").textContent = "—";
-      }
-    });
-}
-
-// ===============================
-// CRIAR JOGO
-// ===============================
 function addMatch() {
   const casa = document.getElementById("casa").value;
   const fora = document.getElementById("fora").value;
-  const jornada = parseInt(document.getElementById("jornada-select").value);
-
-  if (!casa || !fora || !jornada) {
-    alert("Preenche casa, fora e jornada!");
-    return;
-  }
 
   fetch("/add-match", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ 
-      equipa_casa: casa, 
-      equipa_fora: fora,
-      jornada: jornada
-    })
-  }).then(() => {
-    loadMatches();
-    loadTabelaMatriz();
-  });
+    body: JSON.stringify({ equipa_casa: casa, equipa_fora: fora })
+  }).then(loadMatches);
 }
 
-// ===============================
-// LISTAR JOGOS
-// ===============================
 function loadMatches() {
   fetch("/matches")
     .then(r => r.json())
     .then(matches => {
-      cacheMatches = matches;
-
       const tabela = document.getElementById("tabela-jogos");
       tabela.innerHTML = "";
 
@@ -185,40 +95,22 @@ function loadMatches() {
             <td>${m.id}</td>
             <td>${m.equipa_casa}</td>
             <td>${m.equipa_fora}</td>
-            <td>${m.jornada}</td>
             <td>${m.golos_casa ?? "-"} : ${m.golos_fora ?? "-"}</td>
             <td>${m.processado ? "Sim" : "Não"}</td>
             <td>
-              <button class="btn-small" onclick="mostrarInputs(${m.id})">Inserir Resultado</button>
-              <button class="btn-small" onclick="reprocessar(${m.id})">Reprocessar</button>
-              <button class="btn-small" onclick="recalcular(${m.id})">Recalcular</button>
-              <div id="inputs-${m.id}" style="display:none; margin-top:5px;">
-                <input id="res-casa-${m.id}" type="number" placeholder="Casa" style="width:60px;">
-                <input id="res-fora-${m.id}" type="number" placeholder="Fora" style="width:60px;">
-                <button class="btn-small" onclick="guardarResultado(${m.id})">Guardar</button>
-              </div>
+              <button onclick="inserirResultado(${m.id})">Inserir Resultado</button>
             </td>
           </tr>
         `;
       });
 
-      preencherJornadaSelect();
       loadMatchesForPredictions();
     });
 }
 
-function mostrarInputs(id) {
-  document.getElementById(`inputs-${id}`).style.display = "block";
-}
-
-function guardarResultado(id) {
-  const casa = parseInt(document.getElementById(`res-casa-${id}`).value);
-  const fora = parseInt(document.getElementById(`res-fora-${id}`).value);
-
-  if (isNaN(casa) || isNaN(fora)) {
-    alert("Preenche os golos!");
-    return;
-  }
+function inserirResultado(id) {
+  const casa = prompt("Golos casa:");
+  const fora = prompt("Golos fora:");
 
   fetch(`/result/${id}`, {
     method: "POST",
@@ -226,37 +118,14 @@ function guardarResultado(id) {
     body: JSON.stringify({ casa, fora })
   }).then(() => {
     loadMatches();
-    loadTabelaMatriz();
-    atualizarResumoJogadores();
+    loadPredictions();
   });
 }
 
-function reprocessar(id) {
-  fetch(`/reprocess/${id}`, { method: "POST" })
-    .then(() => {
-      loadMatches();
-      loadTabelaMatriz();
-      atualizarResumoJogadores();
-    });
-}
-
-function recalcular(id) {
-  fetch(`/recalculate/${id}`, { method: "POST" })
-    .then(() => {
-      loadMatches();
-      loadTabelaMatriz();
-      atualizarResumoJogadores();
-    });
-}
-
-// ===============================
-// PLAYERS E MATCHES PARA PROGNÓSTICOS
-// ===============================
-function loadPlayersForPredictions() {
+function loadPlayers() {
   fetch("/players")
     .then(r => r.json())
     .then(players => {
-      cachePlayers = players;
       const sel = document.getElementById("player-select");
       sel.innerHTML = "";
       players.forEach(p => {
@@ -266,180 +135,47 @@ function loadPlayersForPredictions() {
 }
 
 function loadMatchesForPredictions() {
-  const matches = cacheMatches;
-  const sel = document.getElementById("match-select");
-  sel.innerHTML = "";
-  matches.forEach(m => {
-    sel.innerHTML += `<option value="${m.id}">
-      Jornada ${m.jornada}: ${m.equipa_casa} vs ${m.equipa_fora}
-    </option>`;
-  });
+  fetch("/matches")
+    .then(r => r.json())
+    .then(matches => {
+      const sel = document.getElementById("match-select");
+      sel.innerHTML = "";
+      matches.forEach(m => {
+        sel.innerHTML += `<option value="${m.id}">${m.equipa_casa} vs ${m.equipa_fora}</option>`;
+      });
+    });
 }
 
-// ===============================
-// GUARDAR PROGNÓSTICO
-// ===============================
 function addPrediction() {
   const player_id = document.getElementById("player-select").value;
   const match_id = document.getElementById("match-select").value;
-  const palpite_casa = parseInt(document.getElementById("palpite-casa").value);
-  const palpite_fora = parseInt(document.getElementById("palpite-fora").value);
-
-  if (!player_id || !match_id || isNaN(palpite_casa) || isNaN(palpite_fora)) {
-    alert("Seleciona jogador, jogo e preenche os golos!");
-    return;
-  }
+  const palpite_casa = document.getElementById("palpite-casa").value;
+  const palpite_fora = document.getElementById("palpite-fora").value;
 
   fetch("/add-prediction", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({ player_id, match_id, palpite_casa, palpite_fora })
-  }).then(() => {
-    loadTabelaMatriz();
-  });
+  }).then(loadPredictions);
 }
 
-// ===============================
-// JORNADAS (DROPDOWN)
-// ===============================
-function preencherJornadaSelect() {
-  const select = document.getElementById("jornada-select");
-  select.innerHTML = `<option value="">Jornada...</option>`;
-
-  const jornadas = [...new Set(cacheMatches.map(m => m.jornada))].sort((a, b) => a - b);
-  jornadas.forEach(j => {
-    select.innerHTML += `<option value="${j}">Jornada ${j}</option>`;
-  });
-}
-</script>
-<script>
-// ===============================
-// MATRIZ POR JORNADA
-// ===============================
-function loadTabelaMatriz() {
-  Promise.all([
-    fetch("/players").then(r => r.json()),
-    fetch("/matches").then(r => r.json()),
-    fetch("/all-predictions").then(r => r.json())
-  ]).then(([players, matches, predictions]) => {
-
-    cachePlayers = players;
-    cacheMatches = matches;
-    cachePredictions = predictions;
-
-    const container = document.getElementById("matrizes-jornadas");
-    container.innerHTML = "";
-
-    // Agrupar jogos por jornada
-    const jornadas = {};
-    matches.forEach(m => {
-      if (!jornadas[m.jornada]) jornadas[m.jornada] = [];
-      jornadas[m.jornada].push(m);
-    });
-
-    // Preencher dropdown
-    const select = document.getElementById("select-jornada");
-    select.innerHTML = "";
-    Object.keys(jornadas).sort((a,b)=>a-b).forEach(j => {
-      select.innerHTML += `<option value="${j}">Jornada ${j}</option>`;
-    });
-
-    // Criar tabelas por jornada
-    Object.keys(jornadas).forEach(j => {
-      const jogos = jornadas[j];
-
-      let html = `
-        <div class="jornada-box" id="jornada-${j}" style="display:none;">
-        <h2>Jornada ${j}</h2>
-        <table class="tabela-matriz">
-          <thead><tr><th>Jogador</th>
-      `;
-
-      jogos.forEach(m => {
-        const res = m.golos_casa !== null ? `${m.golos_casa}-${m.golos_fora}` : "-";
-        html += `
-          <th>
-            ${m.equipa_casa} vs ${m.equipa_fora}
-            <br><small>${res}</small>
-          </th>`;
+function loadPredictions() {
+  fetch("/all-predictions")
+    .then(r => r.json())
+    .then(preds => {
+      const div = document.getElementById("lista-prognosticos");
+      div.innerHTML = "";
+      preds.forEach(p => {
+        div.innerHTML += `<p>Jogador ${p.player_id} → ${p.palpite_casa}-${p.palpite_fora}</p>`;
       });
-
-      html += "</tr></thead><tbody>";
-
-      players.forEach(p => {
-        html += `<tr><td class="fixo">${p.nome}</td>`;
-
-        jogos.forEach(m => {
-          const palpite = predictions.find(pr => pr.player_id === p.id && pr.match_id === m.id);
-
-          if (palpite) {
-            const pc = palpite.palpite_casa;
-            const pf = palpite.palpite_fora;
-
-            let pontos = 0;
-
-            if (m.golos_casa !== null) {
-              const rc = m.golos_casa;
-              const rf = m.golos_fora;
-
-              if (pc === rc && pf === rf) {
-                pontos = 10;
-              } else {
-                const diffP = pc - pf;
-                const diffR = rc - rf;
-
-                const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
-                const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
-
-                if (vP === vR) pontos += 4;
-                if (pc === rc || pf === rf) pontos += 1;
-              }
-            }
-
-            html += `<td>${pc}-${pf} <br><small>${pontos} pts</small></td>`;
-          } else {
-            html += `<td>-</td>`;
-          }
-        });
-
-        html += "</tr>";
-      });
-
-      html += "</tbody></table></div>";
-
-      container.innerHTML += html;
     });
-
-    mostrarJornada();
-  });
 }
 
-// ===============================
-// MOSTRAR JORNADA SELECIONADA
-// ===============================
-function mostrarJornada() {
-  const j = document.getElementById("select-jornada").value;
-
-  document.querySelectorAll(".jornada-box").forEach(box => {
-    box.style.display = "none";
-  });
-
-  const box = document.getElementById(`jornada-${j}`);
-  if (box) box.style.display = "block";
-}
-
-// ===============================
-// INICIALIZAÇÃO
-// ===============================
-function init() {
-  mostrarSecao("home");
-  atualizarResumoJogadores();
-  loadMatches();
-  loadPlayersForPredictions();
-  loadTabelaMatriz();
-}
-
-init();
+loadPlayers();
+loadMatches();
+loadPredictions();
+mostrarSecao("home");
 </script>
+
 </body>
 </html>
