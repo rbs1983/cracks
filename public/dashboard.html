@@ -273,7 +273,32 @@ function loadTabelaMatriz() {
         const palpite = predictions.find(pr => pr.player_id === p.id && pr.match_id === m.id);
 
         if (palpite) {
-          bodyHTML += `<td>${palpite.palpite_casa}-${palpite.palpite_fora}</td>`;
+          let pontos = 0;
+
+          if (m.golos_casa !== null) {
+            const pc = palpite.palpite_casa;
+            const pf = palpite.palpite_fora;
+            const rc = m.golos_casa;
+            const rf = m.golos_fora;
+
+            if (pc === rc && pf === rf) {
+              pontos = 10;
+            } else {
+              const diffP = pc - pf;
+              const diffR = rc - rf;
+
+              const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
+              const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
+
+              if (vP === vR) pontos += 4;
+              if (pc === rc || pf === rf) pontos += 1;
+            }
+          }
+
+          bodyHTML += `
+            <td>
+              ${palpite.palpite_casa}-${palpite.palpite_fora} (${pontos} pts)
+            </td>`;
         } else {
           bodyHTML += `<td>-</td>`;
         }
