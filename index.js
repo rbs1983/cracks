@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 
@@ -7,36 +8,35 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Rota inicial (teste)
+// Servir ficheiros estáticos
+app.use(express.static(path.join(__dirname, "public")));
+
+// Healthcheck (Railway usa isto para confirmar que o servidor está vivo)
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+
+// Rotas da API
 app.get("/", (req, res) => {
   res.send("API da Liga Portuguesa está online!");
 });
 
-// Rotas do menu lateral
 app.get("/classificacao", (req, res) => {
-  res.json({
-    secao: "Classificação",
-    mensagem: "Aqui vais enviar a tabela da liga."
-  });
+  res.json({ secao: "Classificação" });
 });
 
 app.get("/jogos", (req, res) => {
-  res.json({
-    secao: "Jogos",
-    mensagem: "Aqui vais listar os jogos e resultados."
-  });
+  res.json({ secao: "Jogos" });
 });
 
 app.get("/palpites", (req, res) => {
-  res.json({
-    secao: "Palpites",
-    mensagem: "Aqui vais gerir os palpites dos jogadores."
-  });
+  res.json({ secao: "Palpites" });
 });
 
-// Porta dinâmica para Railway
+// Porta obrigatória para Railway
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+// Bind explícito para 0.0.0.0 (ESSENCIAL no Railway)
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Servidor a correr na porta ${PORT}`);
 });
