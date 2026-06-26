@@ -7,11 +7,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Servir ficheiros estáticos
+// Servir ficheiros estáticos (dashboard)
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
   res.send("API da Liga Portuguesa está online!");
+});
+
+app.get("/classificacao", (req, res) => {
+  res.json({ secao: "Classificação" });
+});
+
+app.get("/jogos", (req, res) => {
+  res.json({ secao: "Jogos" });
+});
+
+app.get("/palpites", (req, res) => {
+  res.json({ secao: "Palpites" });
 });
 
 const PORT = process.env.PORT || 3000;
