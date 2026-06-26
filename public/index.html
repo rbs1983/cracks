@@ -1,73 +1,42 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Bolão — Página Inicial</title>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    a { margin-right: 20px; font-size: 18px; }
-    h1 { margin-top: 40px; }
-    ul { padding-left: 20px; }
-  </style>
-</head>
-<body>
+const express = require("express");
+const cors = require("cors");
 
-<h1>Bolão — Página Inicial</h1>
+const app = express();
 
-<!-- MENU -->
-<nav>
-  <a href="admin.html">Painel Admin</a>
-  <a href="prognosticos.html">Prognósticos</a>
-  <a href="pontos.html">Pontos por Jogo</a>
-  <a href="ranking.html">Ranking Geral</a>
-</nav>
+// Middlewares
+app.use(cors());
+app.use(express.json());
 
-<h1>Jogos</h1>
-<ul id="listaJogos"></ul>
+// Rota inicial (teste)
+app.get("/", (req, res) => {
+  res.send("API da Liga Portuguesa está online!");
+});
 
-<h1>Ranking</h1>
-<ul id="listaRanking"></ul>
+// Rotas principais do dashboard
+app.get("/classificacao", (req, res) => {
+  res.json({
+    secao: "Classificação",
+    mensagem: "Aqui vais enviar a tabela da liga."
+  });
+});
 
-<script>
-function loadMatches() {
-  fetch("/matches")
-    .then(res => res.json())
-    .then(data => {
-      const lista = document.getElementById("listaJogos");
-      lista.innerHTML = "";
+app.get("/jogos", (req, res) => {
+  res.json({
+    secao: "Jogos",
+    mensagem: "Aqui vais listar os jogos e resultados."
+  });
+});
 
-      data.forEach(m => {
-        const texto = m.equipa_casa + " vs " + m.equipa_fora;
-        const li = document.createElement("li");
+app.get("/palpites", (req, res) => {
+  res.json({
+    secao: "Palpites",
+    mensagem: "Aqui vais gerir os palpites dos jogadores."
+  });
+});
 
-        if (m.golos_casa === null) {
-          li.textContent = texto + " ⏳";
-        } else {
-          li.textContent = texto + " ✅ " + m.golos_casa + "-" + m.golos_fora;
-        }
+// Porta dinâmica para Railway
+const PORT = process.env.PORT || 3000;
 
-        lista.appendChild(li);
-      });
-    });
-}
-
-function loadRanking() {
-  fetch("/ranking")
-    .then(res => res.json())
-    .then(data => {
-      const lista = document.getElementById("listaRanking");
-      lista.innerHTML = "";
-
-      data.forEach(p => {
-        const li = document.createElement("li");
-        li.textContent = p.nome + " — " + p.pontos + " pts";
-        lista.appendChild(li);
-      });
-    });
-}
-
-loadMatches();
-loadRanking();
-</script>
-
-</body>
-</html>
+app.listen(PORT, () => {
+  console.log(`Servidor a correr na porta ${PORT}`);
+});
