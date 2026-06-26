@@ -2,11 +2,11 @@
   "name": "liga-portuguesa-api",
   "version": "1.0.0",
   "description": "API da Liga Portuguesa (Classificação, Jogos, Palpites)",
-  "main": "server.js",
+  "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
