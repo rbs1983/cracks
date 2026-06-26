@@ -1,28 +1,34 @@
 const express = require("express");
-const sqlite3 = require("sqlite3").verbose();
+const { Pool } = require("pg");
 const path = require("path");
 const app = express();
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-const db = new sqlite3.Database("database.db");
+// ===============================
+// POSTGRESQL CONNECTION (Railway)
+// ===============================
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 // ===============================
 // CRIAR TABELAS
 // ===============================
-db.serialize(() => {
-  db.run(`
+async function initDB() {
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS players (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       nome TEXT,
       pontos INTEGER DEFAULT 0
     )
   `);
 
-  db.run(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS matches (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       equipa_casa TEXT,
       equipa_fora TEXT,
       jornada INTEGER,
@@ -32,180 +38,185 @@ db.serialize(() => {
     )
   `);
 
-  db.run(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS predictions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      player_id INTEGER,
-      match_id INTEGER,
+      id SERIAL PRIMARY KEY,
+      player_id INTEGER REFERENCES players(id),
+      match_id INTEGER REFERENCES matches(id),
       palpite_casa INTEGER,
       palpite_fora INTEGER
     )
   `);
-});
+}
 
 // ===============================
 // ROTAS PLAYERS
 // ===============================
-app.get("/players", (req, res) => {
-  db.all("SELECT * FROM players ORDER BY pontos DESC", (err, rows) => {
-    res.json(rows);
-  });
+app.get("/players", async (req, res) => {
+  const result = await pool.query("SELECT * FROM players ORDER BY pontos DESC");
+  res.json(result.rows);
 });
 
-app.post("/add-player", (req, res) => {
+app.post("/add-player", async (req, res) => {
   const { nome } = req.body;
-  db.run("INSERT INTO players (nome) VALUES (?)", [nome], () => {
-    res.json({ status: "ok" });
-  });
+  await pool.query("INSERT INTO players (nome) VALUES ($1)", [nome]);
+  res.json({ status: "ok" });
 });
 
 // ===============================
 // ADICIONAR JOGO
 // ===============================
-app.post("/add-match", (req, res) => {
+app.post("/add-match", async (req, res) => {
   const { equipa_casa, equipa_fora, jornada } = req.body;
 
-  db.run(
-    "INSERT INTO matches (equipa_casa, equipa_fora, jornada) VALUES (?, ?, ?)",
-    [equipa_casa, equipa_fora, jornada],
-    () => res.json({ status: "ok" })
+  await pool.query(
+    "INSERT INTO matches (equipa_casa, equipa_fora, jornada) VALUES ($1, $2, $3)",
+    [equipa_casa, equipa_fora, jornada]
   );
+
+  res.json({ status: "ok" });
 });
 
 // ===============================
 // LISTAR JOGOS
 // ===============================
-app.get("/matches", (req, res) => {
-  db.all(
-    "SELECT * FROM matches ORDER BY jornada ASC, id ASC",
-    (err, rows) => res.json(rows)
+app.get("/matches", async (req, res) => {
+  const result = await pool.query(
+    "SELECT * FROM matches ORDER BY jornada ASC, id ASC"
   );
+  res.json(result.rows);
 });
 
 // ===============================
 // ADICIONAR / EDITAR PROGNÓSTICO
 // ===============================
-app.post("/add-prediction", (req, res) => {
+app.post("/add-prediction", async (req, res) => {
   const { player_id, match_id, palpite_casa, palpite_fora } = req.body;
 
-  db.get(
-    "SELECT id FROM predictions WHERE player_id=? AND match_id=?",
-    [player_id, match_id],
-    (err, row) => {
-      if (row) {
-        db.run(
-          "UPDATE predictions SET palpite_casa=?, palpite_fora=? WHERE id=?",
-          [palpite_casa, palpite_fora, row.id],
-          () => res.json({ status: "updated" })
-        );
-      } else {
-        db.run(
-          "INSERT INTO predictions (player_id, match_id, palpite_casa, palpite_fora) VALUES (?, ?, ?, ?)",
-          [player_id, match_id, palpite_casa, palpite_fora],
-          () => res.json({ status: "inserted" })
-        );
-      }
-    }
+  const existing = await pool.query(
+    "SELECT id FROM predictions WHERE player_id=$1 AND match_id=$2",
+    [player_id, match_id]
   );
+
+  if (existing.rows.length > 0) {
+    await pool.query(
+      "UPDATE predictions SET palpite_casa=$1, palpite_fora=$2 WHERE id=$3",
+      [palpite_casa, palpite_fora, existing.rows[0].id]
+    );
+    return res.json({ status: "updated" });
+  }
+
+  await pool.query(
+    "INSERT INTO predictions (player_id, match_id, palpite_casa, palpite_fora) VALUES ($1, $2, $3, $4)",
+    [player_id, match_id, palpite_casa, palpite_fora]
+  );
+
+  res.json({ status: "inserted" });
 });
 
 // ===============================
 // LISTAR TODOS OS PROGNÓSTICOS
 // ===============================
-app.get("/all-predictions", (req, res) => {
-  db.all("SELECT * FROM predictions", (err, rows) => {
-    res.json(rows);
-  });
+app.get("/all-predictions", async (req, res) => {
+  const result = await pool.query("SELECT * FROM predictions");
+  res.json(result.rows);
 });
 
 // ===============================
 // INSERIR RESULTADO DO JOGO
 // ===============================
-app.post("/result/:id", (req, res) => {
+app.post("/result/:id", async (req, res) => {
   const id = req.params.id;
   const { casa, fora } = req.body;
 
-  db.run(
-    "UPDATE matches SET golos_casa=?, golos_fora=?, processado=1 WHERE id=?",
-    [casa, fora, id],
-    () => {
-      processarJogo(id, () => res.json({ status: "ok" }));
-    }
+  await pool.query(
+    "UPDATE matches SET golos_casa=$1, golos_fora=$2, processado=1 WHERE id=$3",
+    [casa, fora, id]
   );
+
+  await processarJogo(id);
+  res.json({ status: "ok" });
 });
 
 // ===============================
 // FUNÇÃO DE PROCESSAMENTO DE JOGO
 // ===============================
-function processarJogo(matchId, callback) {
-  db.get("SELECT * FROM matches WHERE id=?", [matchId], (err, match) => {
-    if (!match || match.golos_casa === null) return callback();
+async function processarJogo(matchId) {
+  const matchRes = await pool.query("SELECT * FROM matches WHERE id=$1", [matchId]);
+  const match = matchRes.rows[0];
 
-    db.all("SELECT * FROM predictions WHERE match_id=?", [matchId], (err, preds) => {
-      preds.forEach(p => {
-        let pontos = 0;
+  if (!match || match.golos_casa === null) return;
 
-        const pc = p.palpite_casa;
-        const pf = p.palpite_fora;
-        const rc = match.golos_casa;
-        const rf = match.golos_fora;
+  const predsRes = await pool.query(
+    "SELECT * FROM predictions WHERE match_id=$1",
+    [matchId]
+  );
 
-        if (pc === rc && pf === rf) {
-          pontos = 10;
-        } else {
-          const diffP = pc - pf;
-          const diffR = rc - rf;
+  for (const p of predsRes.rows) {
+    let pontos = 0;
 
-          const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
-          const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
+    const pc = p.palpite_casa;
+    const pf = p.palpite_fora;
+    const rc = match.golos_casa;
+    const rf = match.golos_fora;
 
-          if (vP === vR) pontos += 4;
-          if (pc === rc || pf === rf) pontos += 1;
-        }
+    if (pc === rc && pf === rf) {
+      pontos = 10;
+    } else {
+      const diffP = pc - pf;
+      const diffR = rc - rf;
 
-        db.run("UPDATE players SET pontos = pontos + ? WHERE id=?", [pontos, p.player_id]);
-      });
+      const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
+      const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
 
-      callback();
-    });
-  });
+      if (vP === vR) pontos += 4;
+      if (pc === rc || pf === rf) pontos += 1;
+    }
+
+    await pool.query(
+      "UPDATE players SET pontos = pontos + $1 WHERE id=$2",
+      [pontos, p.player_id]
+    );
+  }
 }
 
 // ===============================
 // REPROCESSAR TUDO
 // ===============================
-app.post("/recalculate-all", (req, res) => {
-  db.run("UPDATE players SET pontos = 0", () => {
-    db.all("SELECT id FROM matches WHERE processado=1", (err, jogos) => {
-      function next(i) {
-        if (i >= jogos.length) return res.json({ status: "ok" });
-        processarJogo(jogos[i].id, () => next(i + 1));
-      }
-      next(0);
-    });
-  });
+app.post("/recalculate-all", async (req, res) => {
+  await pool.query("UPDATE players SET pontos = 0");
+
+  const jogos = await pool.query("SELECT id FROM matches WHERE processado=1");
+
+  for (const j of jogos.rows) {
+    await processarJogo(j.id);
+  }
+
+  res.json({ status: "ok" });
 });
 
 // ===============================
 // REPROCESSAR JOGO INDIVIDUAL
 // ===============================
-app.post("/reprocess/:id", (req, res) => {
+app.post("/reprocess/:id", async (req, res) => {
   const id = req.params.id;
 
-  db.run("UPDATE players SET pontos = 0", () => {
-    db.all("SELECT id FROM matches WHERE processado=1", (err, jogos) => {
-      function next(i) {
-        if (i >= jogos.length) return res.json({ status: "ok" });
-        processarJogo(jogos[i].id, () => next(i + 1));
-      }
-      next(0);
-    });
-  });
+  await pool.query("UPDATE players SET pontos = 0");
+
+  const jogos = await pool.query("SELECT id FROM matches WHERE processado=1");
+
+  for (const j of jogos.rows) {
+    await processarJogo(j.id);
+  }
+
+  res.json({ status: "ok" });
 });
 
 // ===============================
 // INICIAR SERVIDOR
 // ===============================
-app.listen(8080, () => {
-  console.log("🚀 Server ON na porta 8080");
+initDB().then(() => {
+  app.listen(8080, () => {
+    console.log("🚀 Server ON na porta 8080 (PostgreSQL ativo)");
+  });
 });
