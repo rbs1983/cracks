@@ -2,108 +2,82 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <title>Classificação Final</title>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #fafafa;
-    }
-
-    h1 {
-      margin-bottom: 20px;
-    }
-
-    .section {
-      padding: 20px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-
-    table, th, td {
-      border: 1px solid #ddd;
-    }
-
-    th, td {
-      padding: 10px;
-      text-align: center;
-    }
-
-    button {
-      padding: 8px 15px;
-      cursor: pointer;
-      margin-bottom: 20px;
-    }
-  </style>
+  <title>Ranking - Craks da Bola</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <h1>Classificação Final</h1>
+<!-- ⭐ SIDEBAR FUTURISTA -->
+<div class="sidebar">
 
-  <button onclick="window.location.href='dashboard.html'">Voltar ao Dashboard</button>
+  <h2>Craks da Bola</h2>
+  <ul>
+    <li onclick="window.location.href='dashboard.html'">🏠 Craks da Bola</li>
+  </ul>
 
-  <!-- ⭐ NOVO BOTÃO -->
-  <button onclick="recalcularTudo()" style="background:#4CAF50; color:white;">
-    Recalcular Tudo
-  </button>
+  <h2>Liga Portuguesa</h2>
+  <ul>
+    <li onclick="window.location.href='ranking.html'">Classificação</li>
+    <li onclick="window.location.href='dashboard.html#jogos'">Jogos</li>
+    <li onclick="window.location.href='dashboard.html#prognosticos'">Prognósticos</li>
+  </ul>
 
-  <div class="section">
-    <h2>Ranking</h2>
+</div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Posição</th>
-          <th>Jogador</th>
-          <th>Pontos</th>
-        </tr>
-      </thead>
-      <tbody id="ranking-table"></tbody>
-    </table>
-  </div>
+<!-- ⭐ CONTEÚDO PRINCIPAL -->
+<div class="content">
+
+  <h1>Classificação Geral</h1>
+
+  <p style="margin-bottom:20px;">
+    Ranking atualizado automaticamente com base nos prognósticos processados.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Posição</th>
+        <th>Jogador</th>
+        <th>Pontos</th>
+      </tr>
+    </thead>
+    <tbody id="ranking-table"></tbody>
+  </table>
+
+</div>
 
 <script>
-  // ⭐ Recalcular tudo
-  function recalcularTudo() {
-    fetch("/recalculate-all", { method: "POST" })
-      .then(r => r.json())
-      .then(() => {
-        alert("Pontuação recalculada!");
-        loadRanking();
+
+// ⭐ CARREGAR RANKING
+function loadRanking() {
+  fetch("/players")
+    .then(r => r.json())
+    .then(players => {
+
+      // Ordenar por pontos (descendente)
+      players.sort((a, b) => b.pontos - a.pontos);
+
+      const tabela = document.getElementById("ranking-table");
+      tabela.innerHTML = "";
+
+      players.forEach((p, index) => {
+        tabela.innerHTML += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${p.nome}</td>
+            <td>${p.pontos}</td>
+          </tr>
+        `;
       });
-  }
+    });
+}
 
-  // Carregar ranking
-  function loadRanking() {
-    fetch("/ranking")
-      .then(r => r.json())
-      .then(ranking => {
-        const tabela = document.getElementById("ranking-table");
-        tabela.innerHTML = "";
+// ⭐ INICIALIZAR
+window.onload = () => {
+  loadRanking();
+};
 
-        ranking.forEach((p, index) => {
-          tabela.innerHTML += `
-            <tr>
-              <td>${index + 1}º</td>
-              <td>${p.nome}</td>
-              <td>${p.pontos}</td>
-            </tr>
-          `;
-        });
-      });
-  }
-
-  window.onload = loadRanking;
 </script>
 
 </body>
