@@ -1,14 +1,18 @@
 {
-  "name": "craks-da-bola",
+  "name": "liga-portuguesa-api",
   "version": "1.0.0",
-  "description": "Servidor do Craks da Bola",
+  "description": "API da Liga Portuguesa (Classificação, Jogos, Palpites)",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "pg": "^8.11.3"
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
   }
 }
