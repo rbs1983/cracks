@@ -74,7 +74,7 @@
     }
 
     .section {
-      display: none; /* ESCONDIDO POR DEFEITO */
+      display: none;
       margin-top: 30px;
       padding: 20px;
       background: #fff;
@@ -141,8 +141,6 @@
     <li onclick="window.location.href='ranking.html'">Classificação</li>
     <li onclick="mostrarSecao('jogos')">Jogos</li>
     <li onclick="mostrarSecao('prognosticos')">Prognósticos</li>
-    <li onclick="mostrarSecao('resultados')">Resultados</li>
-    <li onclick="recalcularTudo()">Recalcular Tudo</li>
   </ul>
 
 </div>
@@ -216,12 +214,6 @@
     </table>
   </div>
 
-  <!-- SECÇÃO RESULTADOS -->
-  <div class="section" id="resultados">
-    <h2>Resultados</h2>
-    <p>Os resultados são mostrados automaticamente na tabela de jogos e prognósticos.</p>
-  </div>
-
 </div>
 
 <!-- POPUP EDITAR -->
@@ -241,24 +233,11 @@ function mostrarSecao(secao) {
   document.getElementById("home").style.display = "none";
   document.getElementById("jogos").style.display = "none";
   document.getElementById("prognosticos").style.display = "none";
-  document.getElementById("resultados").style.display = "none";
 
   document.getElementById(secao).style.display = "block";
 }
 
 let editId = null;
-
-// ⭐ Recalcular tudo
-function recalcularTudo() {
-  fetch("/recalculate-all", { method: "POST" })
-    .then(r => r.json())
-    .then(() => {
-      alert("Pontuação recalculada com sucesso!");
-      atualizarResumoJogadores();
-      loadMatches();
-      loadPredictions();
-    });
-}
 
 // Atualizar Top Jogador
 function atualizarResumoJogadores() {
