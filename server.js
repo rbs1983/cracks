@@ -47,7 +47,7 @@ db.serialize(() => {
 // ROTAS PLAYERS
 // ===============================
 app.get("/players", (req, res) => {
-  db.all("SELECT * FROM players", (err, rows) => {
+  db.all("SELECT * FROM players ORDER BY pontos DESC", (err, rows) => {
     res.json(rows);
   });
 });
@@ -113,7 +113,7 @@ app.post("/result/:id", (req, res) => {
 });
 
 // ===============================
-// PROCESSAR JOGO (CALCULAR PONTOS)
+// FUNÇÃO DE PROCESSAMENTO DE JOGO
 // ===============================
 function processarJogo(matchId, callback) {
   db.get("SELECT * FROM matches WHERE id=?", [matchId], (err, match) => {
@@ -150,18 +150,12 @@ function processarJogo(matchId, callback) {
 }
 
 // ===============================
-// REPROCESSAR JOGO (RESET + PROCESSAR)
+// REPROCESSAR JOGO INDIVIDUAL
 // ===============================
 app.post("/reprocess/:id", (req, res) => {
   const id = req.params.id;
 
-  db.all("SELECT * FROM predictions WHERE match_id=?", [id], (err, preds) => {
-    preds.forEach(p => {
-      db.run("UPDATE players SET pontos = pontos - (SELECT pontos FROM players WHERE id=?) WHERE id=?", [p.player_id, p.player_id]);
-    });
-
-    db.run("UPDATE players SET pontos = 0");
-
+  db.run("UPDATE players SET pontos = 0", () => {
     db.all("SELECT id FROM matches WHERE processado=1", (err, jogos) => {
       function next(i) {
         if (i >= jogos.length) return res.json({ status: "ok" });
@@ -176,6 +170,23 @@ app.post("/reprocess/:id", (req, res) => {
 // REPROCESSAR TUDO
 // ===============================
 app.post("/recalculate-all", (req, res) => {
+  db.run("UPDATE players SET pontos = 0", () => {
+    db.all("SELECT id FROM matches WHERE processado=1", (err, jogos) => {
+      function next(i) {
+        if (i >= jogos.length) return res.json({ status: "ok" });
+        processarJogo(jogos[i].id, () => next(i + 1));
+      }
+      next(0);
+    });
+  });
+});
+
+// ===============================
+// REINICIAR PONTOS DE UM JOGO
+// ===============================
+app.post("/recalculate/:id", (req, res) => {
+  const id = req.params.id;
+
   db.run("UPDATE players SET pontos = 0", () => {
     db.all("SELECT id FROM matches WHERE processado=1", (err, jogos) => {
       function next(i) {
