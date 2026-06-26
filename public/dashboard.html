@@ -188,17 +188,9 @@
     </table>
   </div>
 
-  <!-- SECÇÃO PROGNÓSTICOS -->
+  <!-- SECÇÃO PROGNÓSTICOS (TABELA UNIFICADA) -->
   <div class="section" id="prognosticos">
-    <h2>Prognósticos</h2>
-
-    <select id="player-select"></select>
-    <select id="match-select"></select>
-
-    <input id="palpite-casa" type="number" placeholder="Golos casa" style="width:120px;">
-    <input id="palpite-fora" type="number" placeholder="Golos fora" style="width:120px;">
-
-    <button onclick="addPrediction()">Guardar Prognóstico</button>
+    <h2>Todos os Prognósticos</h2>
 
     <table>
       <thead>
@@ -207,10 +199,10 @@
           <th>Jogo</th>
           <th>Palpite</th>
           <th>Resultado Real</th>
-          <th>Pontos</th>
+          <th>Pontuação</th>
         </tr>
       </thead>
-      <tbody id="tabela-prognosticos"></tbody>
+      <tbody id="tabela-unica"></tbody>
     </table>
   </div>
 
@@ -265,7 +257,7 @@ function addMatch() {
     body: JSON.stringify({ equipa_casa: casa, equipa_fora: fora })
   }).then(() => {
     loadMatches();
-    loadMatchesForPredictions();
+    loadTabelaUnica();
   });
 }
 
@@ -326,7 +318,7 @@ function guardarResultado(id) {
   }).then(() => {
     alert("Resultado registado!");
     loadMatches();
-    loadPredictions();
+    loadTabelaUnica();
     atualizarResumoJogadores();
   });
 }
@@ -338,7 +330,7 @@ function reprocessar(id) {
     .then(() => {
       alert("Jogo reprocessado!");
       loadMatches();
-      loadPredictions();
+      loadTabelaUnica();
       atualizarResumoJogadores();
     });
 }
@@ -350,92 +342,20 @@ function recalcular(id) {
     .then(() => {
       alert("Jogo recalculado!");
       loadMatches();
-      loadPredictions();
+      loadTabelaUnica();
       atualizarResumoJogadores();
     });
 }
 
-// Carregar jogadores
-function loadPlayers() {
-  fetch("/players")
-    .then(r => r.json())
-    .then(players => {
-      const sel = document.getElementById("player-select");
-      sel.innerHTML = "";
-      players.forEach(p => {
-        sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
-      });
-    });
-}
-
-// Carregar jogos para prognósticos
-function loadMatchesForPredictions() {
-  fetch("/matches")
-    .then(r => r.json())
-    .then(matches => {
-      const sel = document.getElementById("match-select");
-      sel.innerHTML = "";
-      matches.forEach(m => {
-        sel.innerHTML += `<option value="${m.id}">
-          Jogo ${m.id}: ${m.equipa_casa} vs ${m.equipa_fora}
-        </option>`;
-      });
-    });
-}
-
-// Guardar prognóstico
-function addPrediction() {
-  const player_id = document.getElementById("player-select").value;
-  const match_id = document.getElementById("match-select").value;
-  const palpite_casa = parseInt(document.getElementById("palpite-casa").value);
-  const palpite_fora = parseInt(document.getElementById("palpite-fora").value);
-
-  fetch("/add-prediction", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ player_id, match_id, palpite_casa, palpite_fora })
-  }).then(() => {
-    alert("Prognóstico guardado!");
-    loadPredictions();
-  });
-}
-
-// EDITAR PROGNÓSTICO
-function editarPrognostico(id, casa, fora) {
-  editId = id;
-  document.getElementById("edit-casa").value = casa;
-  document.getElementById("edit-fora").value = fora;
-  document.getElementById("edit-box").style.display = "block";
-}
-
-function fecharEdicao() {
-  document.getElementById("edit-box").style.display = "none";
-}
-
-function guardarEdicao() {
-  const palpite_casa = parseInt(document.getElementById("edit-casa").value);
-  const palpite_fora = parseInt(document.getElementById("edit-fora").value);
-
-  fetch(`/edit-prediction/${editId}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ palpite_casa, palpite_fora })
-  })
-  .then(() => {
-    fecharEdicao();
-    loadPredictions();
-  });
-}
-
-// Carregar prognósticos
-function loadPredictions() {
+// TABELA UNIFICADA
+function loadTabelaUnica() {
   Promise.all([
     fetch("/all-predictions").then(r => r.json()),
     fetch("/players").then(r => r.json()),
     fetch("/matches").then(r => r.json())
   ]).then(([predictions, players, matches]) => {
 
-    const tabela = document.getElementById("tabela-prognosticos");
+    const tabela = document.getElementById("tabela-unica");
     tabela.innerHTML = "";
 
     predictions.forEach(p => {
@@ -475,12 +395,7 @@ function loadPredictions() {
         <tr>
           <td>${jogador.nome}</td>
           <td>${jogo.equipa_casa} vs ${jogo.equipa_fora}</td>
-          <td>
-            ${p.palpite_casa} : ${p.palpite_fora}
-            <button class="btn-small" onclick="editarPrognostico(${p.id}, ${p.palpite_casa}, ${p.palpite_fora})">
-              Editar
-            </button>
-          </td>
+          <td>${p.palpite_casa} : ${p.palpite_fora}</td>
           <td>${resultadoReal}</td>
           <td>${pontos}</td>
         </tr>
@@ -494,9 +409,7 @@ window.onload = () => {
   mostrarSecao("home");
   atualizarResumoJogadores();
   loadMatches();
-  loadPlayers();
-  loadMatchesForPredictions();
-  loadPredictions();
+  loadTabelaUnica();
 };
 
 </script>
