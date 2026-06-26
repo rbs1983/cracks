@@ -219,7 +219,7 @@ function loadMatchesForPredictions() {
       sel.innerHTML = "";
       matches.forEach(m => {
         sel.innerHTML += `<option value="${m.id}">
-          Jogo ${m.id}: ${m.equipa_casa} vs ${m.equipa_fora}
+          ${m.equipa_casa} vs ${m.equipa_fora}
         </option>`;
       });
     });
@@ -250,11 +250,16 @@ function loadTabelaMatriz() {
     const head = document.getElementById("matriz-head");
     const body = document.getElementById("matriz-body");
 
-    // CABEÇALHO
+    // CABEÇALHO COM NOMES DAS EQUIPAS
     let headHTML = "<tr><th>Jogador</th>";
     matches.forEach(m => {
       const res = m.golos_casa !== null ? `${m.golos_casa}-${m.golos_fora}` : "-";
-      headHTML += `<th>Jogo ${m.id}<br><small>${res}</small></th>`;
+      headHTML += `
+        <th>
+          ${m.equipa_casa} vs ${m.equipa_fora}
+          <br>
+          <small>${res}</small>
+        </th>`;
     });
     headHTML += "</tr>";
     head.innerHTML = headHTML;
