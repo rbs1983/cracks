@@ -8,6 +8,7 @@
 
 <body>
 
+<!-- SIDEBAR -->
 <div class="sidebar">
 
   <h2>Craks da Bola</h2>
@@ -24,9 +25,10 @@
 
 </div>
 
+<!-- CONTEÚDO -->
 <div class="content">
 
-  <!-- HOME (SEM .section) -->
+  <!-- HOME -->
   <div id="home">
     <h1>Craks da Bola</h1>
 
@@ -78,25 +80,17 @@
 
     <button onclick="addPrediction()">Guardar Prognóstico</button>
 
-    <h3 style="margin-top:30px;">Tabela Completa</h3>
+    <h3 style="margin-top:30px;">Tabela por Jogador e Jogo</h3>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Jogador</th>
-          <th>Jogo</th>
-          <th>Palpite</th>
-          <th>Resultado Real</th>
-          <th>Pontuação</th>
-          <th>Editar</th>
-        </tr>
-      </thead>
-      <tbody id="tabela-unica"></tbody>
+    <table id="tabela-matriz">
+      <thead id="matriz-head"></thead>
+      <tbody id="matriz-body"></tbody>
     </table>
   </div>
 
 </div>
 
+<!-- POPUP EDITAR -->
 <div id="edit-box">
   <h3>Editar Prognóstico</h3>
   <input id="edit-casa" type="number" placeholder="Golos casa">
@@ -141,7 +135,7 @@ function addMatch() {
     body: JSON.stringify({ equipa_casa: casa, equipa_fora: fora })
   }).then(() => {
     loadMatches();
-    loadTabelaUnica();
+    loadTabelaMatriz();
   });
 }
 
@@ -190,7 +184,7 @@ function guardarResultado(id) {
     body: JSON.stringify({ casa, fora })
   }).then(() => {
     loadMatches();
-    loadTabelaUnica();
+    loadTabelaMatriz();
     atualizarResumoJogadores();
   });
 }
@@ -199,7 +193,7 @@ function reprocessar(id) {
   fetch(`/reprocess/${id}`, { method: "POST" })
     .then(() => {
       loadMatches();
-      loadTabelaUnica();
+      loadTabelaMatriz();
       atualizarResumoJogadores();
     });
 }
@@ -208,21 +202,13 @@ function recalcular(id) {
   fetch(`/recalculate/${id}`, { method: "POST" })
     .then(() => {
       loadMatches();
-      loadTabelaUnica();
+      loadTabelaMatriz();
       atualizarResumoJogadores();
     });
 }
 
 function loadPlayers() {
-  fetch("/players")
-    .then(r => r.json())
-    .then(players => {
-      const sel = document.getElementById("player-select");
-      sel.innerHTML = "";
-      players.forEach(p => {
-        sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
-      });
-    });
+  return fetch("/players").then(r => r.json());
 }
 
 function loadMatchesForPredictions() {
@@ -250,94 +236,48 @@ function addPrediction() {
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({ player_id, match_id, palpite_casa, palpite_fora })
   }).then(() => {
-    loadTabelaUnica();
+    loadTabelaMatriz();
   });
 }
 
-function editarPrognostico(id, casa, fora) {
-  editId = id;
-  document.getElementById("edit-casa").value = casa;
-  document.getElementById("edit-fora").value = fora;
-  document.getElementById("edit-box").style.display = "block";
-}
-
-function fecharEdicao() {
-  document.getElementById("edit-box").style.display = "none";
-}
-
-function guardarEdicao() {
-  const palpite_casa = parseInt(document.getElementById("edit-casa").value);
-  const palpite_fora = parseInt(document.getElementById("edit-fora").value);
-
-  fetch(`/edit-prediction/${editId}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ palpite_casa, palpite_fora })
-  })
-  .then(() => {
-    fecharEdicao();
-    loadTabelaUnica();
-  });
-}
-
-function loadTabelaUnica() {
+function loadTabelaMatriz() {
   Promise.all([
-    fetch("/all-predictions").then(r => r.json()),
     fetch("/players").then(r => r.json()),
-    fetch("/matches").then(r => r.json())
-  ]).then(([predictions, players, matches]) => {
+    fetch("/matches").then(r => r.json()),
+    fetch("/all-predictions").then(r => r.json())
+  ]).then(([players, matches, predictions]) => {
 
-    const tabela = document.getElementById("tabela-unica");
-    tabela.innerHTML = "";
+    const head = document.getElementById("matriz-head");
+    const body = document.getElementById("matriz-body");
 
-    predictions.forEach(p => {
-      const jogador = players.find(pl => pl.id === p.player_id);
-      const jogo = matches.find(m => m.id === p.match_id);
-
-      const resultadoReal =
-        jogo.golos_casa !== null
-          ? `${jogo.golos_casa} : ${jogo.golos_fora}`
-          : "-";
-
-      let pontos = "-";
-
-      if (jogo.processado) {
-        const pc = p.palpite_casa;
-        const pf = p.palpite_fora;
-        const rc = jogo.golos_casa;
-        const rf = jogo.golos_fora;
-
-        pontos = 0;
-
-        if (pc === rc && pf === rf) {
-          pontos = 10;
-        } else {
-          const diffP = pc - pf;
-          const diffR = rc - rf;
-
-          const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
-          const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
-
-          if (vP === vR) pontos += 4;
-          if (pc === rc || pf === rf) pontos += 1;
-        }
-      }
-
-      tabela.innerHTML += `
-        <tr>
-          <td>${jogador.nome}</td>
-          <td>${jogo.equipa_casa} vs ${jogo.equipa_fora}</td>
-          <td>${p.palpite_casa} : ${p.palpite_fora}</td>
-          <td>${resultadoReal}</td>
-          <td>${pontos}</td>
-          <td>
-            <button class="btn-small" onclick="editarPrognostico(${p.id}, ${p.palpite_casa}, ${p.palpite_fora})">
-              Editar
-            </button>
-          </td>
-        </tr>
-      `;
+    // CABEÇALHO
+    let headHTML = "<tr><th>Jogador</th>";
+    matches.forEach(m => {
+      const res = m.golos_casa !== null ? `${m.golos_casa}-${m.golos_fora}` : "-";
+      headHTML += `<th>Jogo ${m.id}<br><small>${res}</small></th>`;
     });
+    headHTML += "</tr>";
+    head.innerHTML = headHTML;
+
+    // CORPO
+    let bodyHTML = "";
+    players.forEach(p => {
+      bodyHTML += `<tr><td class="fixo">${p.nome}</td>`;
+
+      matches.forEach(m => {
+        const palpite = predictions.find(pr => pr.player_id === p.id && pr.match_id === m.id);
+
+        if (palpite) {
+          bodyHTML += `<td>${palpite.palpite_casa}-${palpite.palpite_fora}</td>`;
+        } else {
+          bodyHTML += `<td>-</td>`;
+        }
+      });
+
+      bodyHTML += "</tr>";
+    });
+
+    body.innerHTML = bodyHTML;
   });
 }
 
@@ -345,9 +285,15 @@ window.onload = () => {
   mostrarSecao("home");
   atualizarResumoJogadores();
   loadMatches();
-  loadPlayers();
+  loadPlayers().then(players => {
+    const sel = document.getElementById("player-select");
+    sel.innerHTML = "";
+    players.forEach(p => {
+      sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+    });
+  });
   loadMatchesForPredictions();
-  loadTabelaUnica();
+  loadTabelaMatriz();
 };
 </script>
 
