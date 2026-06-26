@@ -1,37 +1,24 @@
-/* ================================
-   FONT FUTURISTA
-================================ */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@300;400;600&display=swap');
-
 body {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
-  background: #000000;
-  color: #e0eaff;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: white;
 }
 
-/* ================================
-   SIDEBAR FUTURISTA
-================================ */
+/* SIDEBAR */
 .sidebar {
   position: fixed;
   left: 0;
   top: 0;
-  width: 240px;
+  width: 220px;
   height: 100%;
-  padding: 25px;
-  background: rgba(10, 10, 20, 0.65);
-  backdrop-filter: blur(12px);
-  border-right: 1px solid rgba(0, 150, 255, 0.4);
-  box-shadow: 0 0 15px rgba(0, 150, 255, 0.25);
+  background: #222;
+  padding: 20px;
 }
 
 .sidebar h2 {
-  text-align: center;
-  color: #6ecbff;
-  margin-bottom: 30px;
-  font-weight: 600;
-  letter-spacing: 1px;
+  margin-top: 0;
+  color: #4db8ff;
 }
 
 .sidebar ul {
@@ -40,161 +27,71 @@ body {
 }
 
 .sidebar ul li {
-  padding: 12px;
-  margin-bottom: 12px;
-  background: rgba(0, 40, 80, 0.35);
-  border: 1px solid rgba(0, 150, 255, 0.3);
-  border-radius: 8px;
-  text-align: center;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: #333;
   cursor: pointer;
-  transition: 0.25s;
-  color: #b8dfff;
+  border-radius: 5px;
 }
 
 .sidebar ul li:hover {
-  background: rgba(0, 80, 150, 0.5);
-  box-shadow: 0 0 10px rgba(0, 150, 255, 0.4);
-  transform: translateX(4px);
+  background: #444;
 }
 
-/* ================================
-   CONTEÚDO PRINCIPAL
-================================ */
+/* CONTEÚDO */
 .content {
-  margin-left: 270px;
-  padding: 30px;
-}
-
-/* ================================
-   TÍTULOS
-================================ */
-h1, h2, h3 {
-  color: #6ecbff;
-  text-shadow: 0 0 8px rgba(0, 150, 255, 0.4);
-}
-
-/* ================================
-   CARDS FUTURISTAS
-================================ */
-.card {
-  background: rgba(0, 20, 40, 0.6);
-  border: 1px solid rgba(0, 150, 255, 0.3);
-  border-radius: 12px;
+  margin-left: 240px;
   padding: 20px;
-  width: 240px;
-  box-shadow: 0 0 12px rgba(0, 150, 255, 0.25);
-  color: #d8ecff;
 }
 
-/* ================================
-   TABELAS NEON
-================================ */
+/* TABELAS */
 table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
-  background: rgba(0, 20, 40, 0.5);
-  border-radius: 10px;
-  overflow: hidden;
+  background: #222;
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #444;
 }
 
 th {
-  background: rgba(0, 60, 120, 0.5);
-  color: #aee4ff;
-  padding: 12px;
-  border-bottom: 1px solid rgba(0, 150, 255, 0.4);
-  text-shadow: 0 0 6px rgba(0, 150, 255, 0.4);
+  background: #333;
 }
 
-td {
-  padding: 10px;
-  color: #d8ecff;
-  border-bottom: 1px solid rgba(0, 150, 255, 0.2);
-}
-
-tr:hover {
-  background: rgba(0, 80, 150, 0.25);
-  transition: 0.2s;
-}
-
-/* ================================
-   BOTÕES NEON
-================================ */
+/* BOTÕES */
 button {
-  background: rgba(0, 80, 150, 0.6);
-  border: 1px solid rgba(0, 150, 255, 0.5);
-  color: #d8ecff;
-  padding: 10px 18px;
-  border-radius: 8px;
+  padding: 8px 14px;
+  background: #4db8ff;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
-  transition: 0.25s;
-  font-family: 'Orbitron', sans-serif;
 }
 
 button:hover {
-  background: rgba(0, 120, 200, 0.8);
-  box-shadow: 0 0 12px rgba(0, 150, 255, 0.6);
-  transform: translateY(-2px);
+  background: #6cc2ff;
 }
 
-/* Botões pequenos */
-.btn-small {
-  padding: 6px 12px;
-  font-size: 12px;
-}
-
-/* ================================
-   INPUTS FUTURISTAS
-================================ */
+/* INPUTS */
 input, select {
-  background: rgba(0, 20, 40, 0.6);
-  border: 1px solid rgba(0, 150, 255, 0.4);
-  color: #d8ecff;
   padding: 8px;
-  border-radius: 6px;
   margin-right: 10px;
-  font-family: 'Orbitron', sans-serif;
+  border-radius: 5px;
+  border: 1px solid #444;
+  background: #222;
+  color: white;
 }
 
-input:focus, select:focus {
-  outline: none;
-  box-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
-}
-
-/* ================================
-   POPUP EDITAR
-================================ */
+/* POPUP EDITAR */
 #edit-box {
-  background: rgba(0, 20, 40, 0.9);
-  border: 1px solid rgba(0, 150, 255, 0.5);
-  box-shadow: 0 0 20px rgba(0, 150, 255, 0.5);
-  border-radius: 12px;
-  padding: 25px;
-  color: #d8ecff;
   display: none;
   position: fixed;
   top: 20%;
   left: 40%;
-  z-index: 999;
-}
-
-/* ================================
-   SECÇÕES (ESCONDIDAS POR DEFEITO)
-================================ */
-.section {
-  display: none !important;
-  background: rgba(0, 20, 40, 0.5);
-  border: 1px solid rgba(0, 150, 255, 0.3);
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 0 15px rgba(0, 150, 255, 0.25);
-  animation: fadeIn 0.4s ease;
-}
-
-/* ================================
-   ANIMAÇÃO SUAVE
-================================ */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  background: #222;
+  padding: 20px;
+  border: 1px solid #555;
+  border-radius: 10px;
 }
