@@ -171,12 +171,18 @@ input:focus, select:focus {
   border-radius: 12px;
   padding: 25px;
   color: #d8ecff;
+  display: none;
+  position: fixed;
+  top: 20%;
+  left: 40%;
+  z-index: 999;
 }
 
 /* ================================
-   SECÇÕES
+   SECÇÕES (ESCONDIDAS POR DEFEITO)
 ================================ */
 .section {
+  display: none !important;
   background: rgba(0, 20, 40, 0.5);
   border: 1px solid rgba(0, 150, 255, 0.3);
   border-radius: 12px;
