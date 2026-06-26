@@ -105,8 +105,15 @@
   <button onclick="guardarEdicao()">Guardar</button>
   <button onclick="fecharEdicao()">Cancelar</button>
 </div>
-
 <script>
+let editId = null;
+let cachePlayers = [];
+let cacheMatches = [];
+let cachePredictions = [];
+
+// ===============================
+// CONTROLO DE SECÇÕES
+// ===============================
 function mostrarSecao(secao) {
   document.getElementById("home").style.display = "none";
   document.getElementById("jogos").style.display = "none";
@@ -115,12 +122,14 @@ function mostrarSecao(secao) {
   document.getElementById(secao).style.display = "block";
 }
 
-let editId = null;
-
+// ===============================
+// RESUMO TOP JOGADOR
+// ===============================
 function atualizarResumoJogadores() {
   fetch("/players")
     .then(r => r.json())
     .then(players => {
+      cachePlayers = players;
       if (players.length > 0) {
         const top = players.reduce((a, b) => (a.pontos > b.pontos ? a : b));
         document.getElementById("top-jogador").textContent =
@@ -131,13 +140,16 @@ function atualizarResumoJogadores() {
     });
 }
 
+// ===============================
+// CRIAR JOGO
+// ===============================
 function addMatch() {
   const casa = document.getElementById("casa").value;
   const fora = document.getElementById("fora").value;
   const jornada = parseInt(document.getElementById("jornada-select").value);
 
-  if (!jornada) {
-    alert("Escolhe a jornada!");
+  if (!casa || !fora || !jornada) {
+    alert("Preenche casa, fora e jornada!");
     return;
   }
 
@@ -155,10 +167,15 @@ function addMatch() {
   });
 }
 
+// ===============================
+// LISTAR JOGOS
+// ===============================
 function loadMatches() {
   fetch("/matches")
     .then(r => r.json())
     .then(matches => {
+      cacheMatches = matches;
+
       const tabela = document.getElementById("tabela-jogos");
       tabela.innerHTML = "";
 
@@ -184,6 +201,9 @@ function loadMatches() {
           </tr>
         `;
       });
+
+      preencherJornadaSelect();
+      loadMatchesForPredictions();
     });
 }
 
@@ -194,6 +214,11 @@ function mostrarInputs(id) {
 function guardarResultado(id) {
   const casa = parseInt(document.getElementById(`res-casa-${id}`).value);
   const fora = parseInt(document.getElementById(`res-fora-${id}`).value);
+
+  if (isNaN(casa) || isNaN(fora)) {
+    alert("Preenche os golos!");
+    return;
+  }
 
   fetch(`/result/${id}`, {
     method: "POST",
@@ -224,29 +249,46 @@ function recalcular(id) {
     });
 }
 
-function loadPlayers() {
-  return fetch("/players").then(r => r.json());
-}
-
-function loadMatchesForPredictions() {
-  fetch("/matches")
+// ===============================
+// PLAYERS E MATCHES PARA PROGNÓSTICOS
+// ===============================
+function loadPlayersForPredictions() {
+  fetch("/players")
     .then(r => r.json())
-    .then(matches => {
-      const sel = document.getElementById("match-select");
+    .then(players => {
+      cachePlayers = players;
+      const sel = document.getElementById("player-select");
       sel.innerHTML = "";
-      matches.forEach(m => {
-        sel.innerHTML += `<option value="${m.id}">
-          ${m.equipa_casa} vs ${m.equipa_fora}
-        </option>`;
+      players.forEach(p => {
+        sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
       });
     });
 }
 
+function loadMatchesForPredictions() {
+  const matches = cacheMatches;
+  const sel = document.getElementById("match-select");
+  sel.innerHTML = "";
+  matches.forEach(m => {
+    sel.innerHTML += `<option value="${m.id}">
+      Jornada ${m.jornada}: ${m.equipa_casa} vs ${m.equipa_fora}
+    </option>`;
+  });
+}
+
+// ===============================
+// GUARDAR PROGNÓSTICO
+// ===============================
 function addPrediction() {
   const player_id = document.getElementById("player-select").value;
   const match_id = document.getElementById("match-select").value;
   const palpite_casa = parseInt(document.getElementById("palpite-casa").value);
   const palpite_fora = parseInt(document.getElementById("palpite-fora").value);
+
+  if (!player_id || !match_id || isNaN(palpite_casa) || isNaN(palpite_fora)) {
+    alert("Seleciona jogador, jogo e preenche os golos!");
+    return;
+  }
 
   fetch("/add-prediction", {
     method: "POST",
@@ -257,6 +299,23 @@ function addPrediction() {
   });
 }
 
+// ===============================
+// JORNADAS (DROPDOWN)
+// ===============================
+function preencherJornadaSelect() {
+  const select = document.getElementById("jornada-select");
+  select.innerHTML = `<option value="">Jornada...</option>`;
+
+  const jornadas = [...new Set(cacheMatches.map(m => m.jornada))].sort((a, b) => a - b);
+  jornadas.forEach(j => {
+    select.innerHTML += `<option value="${j}">Jornada ${j}</option>`;
+  });
+}
+</script>
+<script>
+// ===============================
+// MATRIZ POR JORNADA
+// ===============================
 function loadTabelaMatriz() {
   Promise.all([
     fetch("/players").then(r => r.json()),
@@ -264,21 +323,24 @@ function loadTabelaMatriz() {
     fetch("/all-predictions").then(r => r.json())
   ]).then(([players, matches, predictions]) => {
 
+    cachePlayers = players;
+    cacheMatches = matches;
+    cachePredictions = predictions;
+
     const container = document.getElementById("matrizes-jornadas");
     container.innerHTML = "";
 
     // Agrupar jogos por jornada
     const jornadas = {};
     matches.forEach(m => {
-      const jornada = m.jornada;
-      if (!jornadas[jornada]) jornadas[jornada] = [];
-      jornadas[jornada].push(m);
+      if (!jornadas[m.jornada]) jornadas[m.jornada] = [];
+      jornadas[m.jornada].push(m);
     });
 
     // Preencher dropdown
     const select = document.getElementById("select-jornada");
     select.innerHTML = "";
-    Object.keys(jornadas).forEach(j => {
+    Object.keys(jornadas).sort((a,b)=>a-b).forEach(j => {
       select.innerHTML += `<option value="${j}">Jornada ${j}</option>`;
     });
 
@@ -311,11 +373,12 @@ function loadTabelaMatriz() {
           const palpite = predictions.find(pr => pr.player_id === p.id && pr.match_id === m.id);
 
           if (palpite) {
+            const pc = palpite.palpite_casa;
+            const pf = palpite.palpite_fora;
+
             let pontos = 0;
 
             if (m.golos_casa !== null) {
-              const pc = palpite.palpite_casa;
-              const pf = palpite.palpite_fora;
               const rc = m.golos_casa;
               const rf = m.golos_fora;
 
@@ -333,7 +396,7 @@ function loadTabelaMatriz() {
               }
             }
 
-            html += `<td>${pc}-${pf} (${pontos} pts)</td>`;
+            html += `<td>${pc}-${pf} <br><small>${pontos} pts</small></td>`;
           } else {
             html += `<td>-</td>`;
           }
@@ -351,39 +414,32 @@ function loadTabelaMatriz() {
   });
 }
 
+// ===============================
+// MOSTRAR JORNADA SELECIONADA
+// ===============================
 function mostrarJornada() {
   const j = document.getElementById("select-jornada").value;
 
-  document.querySelectorAll(".jornada-box").forEach(div => {
-    div.style.display = "none";
+  document.querySelectorAll(".jornada-box").forEach(box => {
+    box.style.display = "none";
   });
 
-  document.getElementById(`jornada-${j}`).style.display = "block";
+  const box = document.getElementById(`jornada-${j}`);
+  if (box) box.style.display = "block";
 }
 
-window.onload = () => {
+// ===============================
+// INICIALIZAÇÃO
+// ===============================
+function init() {
   mostrarSecao("home");
   atualizarResumoJogadores();
   loadMatches();
-
-  // Preencher jornadas 1 a 34
-  const jornadaSel = document.getElementById("jornada-select");
-  for (let i = 1; i <= 34; i++) {
-    jornadaSel.innerHTML += `<option value="${i}">Jornada ${i}</option>`;
-  }
-
-  loadPlayers().then(players => {
-    const sel = document.getElementById("player-select");
-    sel.innerHTML = "";
-    players.forEach(p => {
-      sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
-    });
-  });
-
-  loadMatchesForPredictions();
+  loadPlayersForPredictions();
   loadTabelaMatriz();
-};
-</script>
+}
 
+init();
+</script>
 </body>
 </html>
