@@ -6,7 +6,6 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-
 const db = new sqlite3.Database("database.db");
 
 // ===============================
@@ -53,6 +52,13 @@ app.get("/players", (req, res) => {
   });
 });
 
+app.post("/add-player", (req, res) => {
+  const { nome } = req.body;
+  db.run("INSERT INTO players (nome) VALUES (?)", [nome], () => {
+    res.json({ status: "ok" });
+  });
+});
+
 // ===============================
 // ADICIONAR JOGO
 // ===============================
@@ -70,21 +76,36 @@ app.post("/add-match", (req, res) => {
 // LISTAR JOGOS
 // ===============================
 app.get("/matches", (req, res) => {
-  db.all("SELECT * FROM matches ORDER BY jornada, id", (err, rows) => {
-    res.json(rows);
-  });
+  db.all(
+    "SELECT * FROM matches ORDER BY jornada ASC, id ASC",
+    (err, rows) => res.json(rows)
+  );
 });
 
 // ===============================
-// ADICIONAR PROGNÓSTICO
+// ADICIONAR / EDITAR PROGNÓSTICO
 // ===============================
 app.post("/add-prediction", (req, res) => {
   const { player_id, match_id, palpite_casa, palpite_fora } = req.body;
 
-  db.run(
-    "INSERT INTO predictions (player_id, match_id, palpite_casa, palpite_fora) VALUES (?, ?, ?, ?)",
-    [player_id, match_id, palpite_casa, palpite_fora],
-    () => res.json({ status: "ok" })
+  db.get(
+    "SELECT id FROM predictions WHERE player_id=? AND match_id=?",
+    [player_id, match_id],
+    (err, row) => {
+      if (row) {
+        db.run(
+          "UPDATE predictions SET palpite_casa=?, palpite_fora=? WHERE id=?",
+          [palpite_casa, palpite_fora, row.id],
+          () => res.json({ status: "updated" })
+        );
+      } else {
+        db.run(
+          "INSERT INTO predictions (player_id, match_id, palpite_casa, palpite_fora) VALUES (?, ?, ?, ?)",
+          [player_id, match_id, palpite_casa, palpite_fora],
+          () => res.json({ status: "inserted" })
+        );
+      }
+    }
   );
 });
 
@@ -151,23 +172,6 @@ function processarJogo(matchId, callback) {
 }
 
 // ===============================
-// REPROCESSAR JOGO INDIVIDUAL
-// ===============================
-app.post("/reprocess/:id", (req, res) => {
-  const id = req.params.id;
-
-  db.run("UPDATE players SET pontos = 0", () => {
-    db.all("SELECT id FROM matches WHERE processado=1", (err, jogos) => {
-      function next(i) {
-        if (i >= jogos.length) return res.json({ status: "ok" });
-        processarJogo(jogos[i].id, () => next(i + 1));
-      }
-      next(0);
-    });
-  });
-});
-
-// ===============================
 // REPROCESSAR TUDO
 // ===============================
 app.post("/recalculate-all", (req, res) => {
@@ -183,9 +187,9 @@ app.post("/recalculate-all", (req, res) => {
 });
 
 // ===============================
-// REINICIAR PONTOS DE UM JOGO
+// REPROCESSAR JOGO INDIVIDUAL
 // ===============================
-app.post("/recalculate/:id", (req, res) => {
+app.post("/reprocess/:id", (req, res) => {
   const id = req.params.id;
 
   db.run("UPDATE players SET pontos = 0", () => {
