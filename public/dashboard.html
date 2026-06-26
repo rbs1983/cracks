@@ -8,7 +8,6 @@
 
 <body>
 
-<!-- SIDEBAR -->
 <div class="sidebar">
 
   <h2>Craks da Bola</h2>
@@ -25,10 +24,9 @@
 
 </div>
 
-<!-- CONTEÚDO -->
 <div class="content">
 
-  <!-- HOME -->
+  <!-- HOME (SEM .section) -->
   <div id="home">
     <h1>Craks da Bola</h1>
 
@@ -99,7 +97,6 @@
 
 </div>
 
-<!-- POPUP EDITAR -->
 <div id="edit-box">
   <h3>Editar Prognóstico</h3>
   <input id="edit-casa" type="number" placeholder="Golos casa">
@@ -110,8 +107,6 @@
 </div>
 
 <script>
-
-// MOSTRAR SECÇÕES
 function mostrarSecao(secao) {
   document.getElementById("home").style.display = "none";
   document.getElementById("jogos").style.display = "none";
@@ -122,7 +117,6 @@ function mostrarSecao(secao) {
 
 let editId = null;
 
-// TOP JOGADOR
 function atualizarResumoJogadores() {
   fetch("/players")
     .then(r => r.json())
@@ -137,7 +131,6 @@ function atualizarResumoJogadores() {
     });
 }
 
-// CRIAR JOGO
 function addMatch() {
   const casa = document.getElementById("casa").value;
   const fora = document.getElementById("fora").value;
@@ -152,7 +145,6 @@ function addMatch() {
   });
 }
 
-// CARREGAR JOGOS
 function loadMatches() {
   fetch("/matches")
     .then(r => r.json())
@@ -170,15 +162,8 @@ function loadMatches() {
             <td>${m.processado ? "Sim" : "Não"}</td>
             <td>
               <button class="btn-small" onclick="mostrarInputs(${m.id})">Inserir Resultado</button>
-
-              <button class="btn-small" onclick="reprocessar(${m.id})">
-                Reprocessar
-              </button>
-
-              <button class="btn-small" onclick="recalcular(${m.id})">
-                Recalcular
-              </button>
-
+              <button class="btn-small" onclick="reprocessar(${m.id})">Reprocessar</button>
+              <button class="btn-small" onclick="recalcular(${m.id})">Recalcular</button>
               <div id="inputs-${m.id}" style="display:none; margin-top:5px;">
                 <input id="res-casa-${m.id}" type="number" placeholder="Casa" style="width:60px;">
                 <input id="res-fora-${m.id}" type="number" placeholder="Fora" style="width:60px;">
@@ -195,7 +180,6 @@ function mostrarInputs(id) {
   document.getElementById(`inputs-${id}`).style.display = "block";
 }
 
-// GUARDAR RESULTADO
 function guardarResultado(id) {
   const casa = parseInt(document.getElementById(`res-casa-${id}`).value);
   const fora = parseInt(document.getElementById(`res-fora-${id}`).value);
@@ -211,7 +195,6 @@ function guardarResultado(id) {
   });
 }
 
-// REPROCESSAR
 function reprocessar(id) {
   fetch(`/reprocess/${id}`, { method: "POST" })
     .then(() => {
@@ -221,7 +204,6 @@ function reprocessar(id) {
     });
 }
 
-// RECALCULAR
 function recalcular(id) {
   fetch(`/recalculate/${id}`, { method: "POST" })
     .then(() => {
@@ -231,7 +213,6 @@ function recalcular(id) {
     });
 }
 
-// CARREGAR JOGADORES
 function loadPlayers() {
   fetch("/players")
     .then(r => r.json())
@@ -244,7 +225,6 @@ function loadPlayers() {
     });
 }
 
-// CARREGAR JOGOS PARA PROGNÓSTICOS
 function loadMatchesForPredictions() {
   fetch("/matches")
     .then(r => r.json())
@@ -259,7 +239,6 @@ function loadMatchesForPredictions() {
     });
 }
 
-// ADICIONAR PROGNÓSTICO
 function addPrediction() {
   const player_id = document.getElementById("player-select").value;
   const match_id = document.getElementById("match-select").value;
@@ -275,7 +254,6 @@ function addPrediction() {
   });
 }
 
-// EDITAR PROGNÓSTICO
 function editarPrognostico(id, casa, fora) {
   editId = id;
   document.getElementById("edit-casa").value = casa;
@@ -302,7 +280,6 @@ function guardarEdicao() {
   });
 }
 
-// TABELA UNIFICADA
 function loadTabelaUnica() {
   Promise.all([
     fetch("/all-predictions").then(r => r.json()),
@@ -364,7 +341,6 @@ function loadTabelaUnica() {
   });
 }
 
-// INICIALIZAÇÃO
 window.onload = () => {
   mostrarSecao("home");
   atualizarResumoJogadores();
@@ -373,7 +349,6 @@ window.onload = () => {
   loadMatchesForPredictions();
   loadTabelaUnica();
 };
-
 </script>
 
 </body>
