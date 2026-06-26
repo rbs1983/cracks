@@ -8,12 +8,12 @@
 
 <body>
 
-<!-- ⭐ SIDEBAR FUTURISTA -->
+<!-- SIDEBAR -->
 <div class="sidebar">
 
-  <h2>Home</h2>
+  <h2>Craks da Bola</h2>
   <ul>
-    <li onclick="mostrarSecao('home')">🏠 Home</li>
+    <li onclick="mostrarSecao('home')">🏠 Craks da Bola</li>
   </ul>
 
   <h2>Liga Portuguesa</h2>
@@ -25,11 +25,11 @@
 
 </div>
 
-<!-- ⭐ CONTEÚDO PRINCIPAL -->
+<!-- CONTEÚDO -->
 <div class="content">
 
   <!-- HOME -->
-  <div class="section" id="home">
+  <div id="home">
     <h1>Craks da Bola</h1>
 
     <div class="card-container">
@@ -45,7 +45,7 @@
     </p>
   </div>
 
-  <!-- ⭐ SECÇÃO JOGOS -->
+  <!-- JOGOS -->
   <div class="section" id="jogos">
     <h2>Jogos</h2>
 
@@ -68,7 +68,7 @@
     </table>
   </div>
 
-  <!-- ⭐ SECÇÃO PROGNÓSTICOS -->
+  <!-- PROGNÓSTICOS -->
   <div class="section" id="prognosticos">
     <h2>Prognósticos</h2>
 
@@ -99,7 +99,7 @@
 
 </div>
 
-<!-- ⭐ POPUP EDITAR -->
+<!-- POPUP EDITAR -->
 <div id="edit-box">
   <h3>Editar Prognóstico</h3>
   <input id="edit-casa" type="number" placeholder="Golos casa">
@@ -111,32 +111,18 @@
 
 <script>
 
-// ⭐ MOSTRAR SECÇÕES
+// MOSTRAR SECÇÕES
 function mostrarSecao(secao) {
   document.getElementById("home").style.display = "none";
   document.getElementById("jogos").style.display = "none";
   document.getElementById("prognosticos").style.display = "none";
 
   document.getElementById(secao).style.display = "block";
-
-  // Atualizar hash no URL
-  window.location.hash = secao;
 }
-
-// ⭐ SUPORTE PARA HASH (#jogos, #prognosticos, etc.)
-document.addEventListener("DOMContentLoaded", () => {
-  const hash = window.location.hash.replace("#", "");
-
-  if (hash && document.getElementById(hash)) {
-    mostrarSecao(hash);
-  } else {
-    mostrarSecao("home");
-  }
-});
 
 let editId = null;
 
-// ⭐ TOP JOGADOR
+// TOP JOGADOR
 function atualizarResumoJogadores() {
   fetch("/players")
     .then(r => r.json())
@@ -151,7 +137,7 @@ function atualizarResumoJogadores() {
     });
 }
 
-// ⭐ CRIAR JOGO
+// CRIAR JOGO
 function addMatch() {
   const casa = document.getElementById("casa").value;
   const fora = document.getElementById("fora").value;
@@ -166,7 +152,7 @@ function addMatch() {
   });
 }
 
-// ⭐ CARREGAR JOGOS
+// CARREGAR JOGOS
 function loadMatches() {
   fetch("/matches")
     .then(r => r.json())
@@ -209,7 +195,7 @@ function mostrarInputs(id) {
   document.getElementById(`inputs-${id}`).style.display = "block";
 }
 
-// ⭐ GUARDAR RESULTADO
+// GUARDAR RESULTADO
 function guardarResultado(id) {
   const casa = parseInt(document.getElementById(`res-casa-${id}`).value);
   const fora = parseInt(document.getElementById(`res-fora-${id}`).value);
@@ -225,7 +211,7 @@ function guardarResultado(id) {
   });
 }
 
-// ⭐ REPROCESSAR
+// REPROCESSAR
 function reprocessar(id) {
   fetch(`/reprocess/${id}`, { method: "POST" })
     .then(() => {
@@ -235,7 +221,7 @@ function reprocessar(id) {
     });
 }
 
-// ⭐ RECALCULAR
+// RECALCULAR
 function recalcular(id) {
   fetch(`/recalculate/${id}`, { method: "POST" })
     .then(() => {
@@ -245,7 +231,7 @@ function recalcular(id) {
     });
 }
 
-// ⭐ CARREGAR JOGADORES
+// CARREGAR JOGADORES
 function loadPlayers() {
   fetch("/players")
     .then(r => r.json())
@@ -258,7 +244,7 @@ function loadPlayers() {
     });
 }
 
-// ⭐ CARREGAR JOGOS PARA PROGNÓSTICOS
+// CARREGAR JOGOS PARA PROGNÓSTICOS
 function loadMatchesForPredictions() {
   fetch("/matches")
     .then(r => r.json())
@@ -273,7 +259,7 @@ function loadMatchesForPredictions() {
     });
 }
 
-// ⭐ ADICIONAR PROGNÓSTICO
+// ADICIONAR PROGNÓSTICO
 function addPrediction() {
   const player_id = document.getElementById("player-select").value;
   const match_id = document.getElementById("match-select").value;
@@ -289,7 +275,7 @@ function addPrediction() {
   });
 }
 
-// ⭐ EDITAR PROGNÓSTICO
+// EDITAR PROGNÓSTICO
 function editarPrognostico(id, casa, fora) {
   editId = id;
   document.getElementById("edit-casa").value = casa;
@@ -316,7 +302,7 @@ function guardarEdicao() {
   });
 }
 
-// ⭐ TABELA UNIFICADA
+// TABELA UNIFICADA
 function loadTabelaUnica() {
   Promise.all([
     fetch("/all-predictions").then(r => r.json()),
@@ -377,6 +363,16 @@ function loadTabelaUnica() {
     });
   });
 }
+
+// INICIALIZAÇÃO
+window.onload = () => {
+  mostrarSecao("home");
+  atualizarResumoJogadores();
+  loadMatches();
+  loadPlayers();
+  loadMatchesForPredictions();
+  loadTabelaUnica();
+};
 
 </script>
 
