@@ -1,42 +1,18 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Rota inicial (teste)
+// Servir ficheiros estáticos
+app.use(express.static(path.join(__dirname, "public")));
+
 app.get("/", (req, res) => {
   res.send("API da Liga Portuguesa está online!");
 });
 
-// Rotas principais do dashboard
-app.get("/classificacao", (req, res) => {
-  res.json({
-    secao: "Classificação",
-    mensagem: "Aqui vais enviar a tabela da liga."
-  });
-});
-
-app.get("/jogos", (req, res) => {
-  res.json({
-    secao: "Jogos",
-    mensagem: "Aqui vais listar os jogos e resultados."
-  });
-});
-
-app.get("/palpites", (req, res) => {
-  res.json({
-    secao: "Palpites",
-    mensagem: "Aqui vais gerir os palpites dos jogadores."
-  });
-});
-
-// Porta dinâmica para Railway
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Servidor a correr na porta ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Servidor a correr na porta ${PORT}`));
