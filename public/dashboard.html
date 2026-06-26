@@ -80,12 +80,12 @@
 
     <button onclick="addPrediction()">Guardar Prognóstico</button>
 
-    <h3 style="margin-top:30px;">Tabela por Jogador e Jogo</h3>
+    <h3 style="margin-top:30px;">Prognósticos por Jornada</h3>
 
-    <table id="tabela-matriz">
-      <thead id="matriz-head"></thead>
-      <tbody id="matriz-body"></tbody>
-    </table>
+    <label>Selecionar Jornada:</label>
+    <select id="select-jornada" onchange="mostrarJornada()"></select>
+
+    <div id="matrizes-jornadas"></div>
   </div>
 
 </div>
@@ -247,68 +247,101 @@ function loadTabelaMatriz() {
     fetch("/all-predictions").then(r => r.json())
   ]).then(([players, matches, predictions]) => {
 
-    const head = document.getElementById("matriz-head");
-    const body = document.getElementById("matriz-body");
+    const container = document.getElementById("matrizes-jornadas");
+    container.innerHTML = "";
 
-    // CABEÇALHO COM NOMES DAS EQUIPAS
-    let headHTML = "<tr><th>Jogador</th>";
+    // Agrupar jogos por jornada (4 jogos por jornada)
+    const jornadas = {};
     matches.forEach(m => {
-      const res = m.golos_casa !== null ? `${m.golos_casa}-${m.golos_fora}` : "-";
-      headHTML += `
-        <th>
-          ${m.equipa_casa} vs ${m.equipa_fora}
-          <br>
-          <small>${res}</small>
-        </th>`;
+      const jornada = Math.ceil(m.id / 4);
+      if (!jornadas[jornada]) jornadas[jornada] = [];
+      jornadas[jornada].push(m);
     });
-    headHTML += "</tr>";
-    head.innerHTML = headHTML;
 
-    // CORPO
-    let bodyHTML = "";
-    players.forEach(p => {
-      bodyHTML += `<tr><td class="fixo">${p.nome}</td>`;
+    // Preencher dropdown
+    const select = document.getElementById("select-jornada");
+    select.innerHTML = "";
+    Object.keys(jornadas).forEach(j => {
+      select.innerHTML += `<option value="${j}">Jornada ${j}</option>`;
+    });
 
-      matches.forEach(m => {
-        const palpite = predictions.find(pr => pr.player_id === p.id && pr.match_id === m.id);
+    // Criar tabelas por jornada
+    Object.keys(jornadas).forEach(j => {
+      const jogos = jornadas[j];
 
-        if (palpite) {
-          let pontos = 0;
+      let html = `
+        <div class="jornada-box" id="jornada-${j}" style="display:none;">
+        <h2>Jornada ${j}</h2>
+        <table class="tabela-matriz">
+          <thead><tr><th>Jogador</th>
+      `;
 
-          if (m.golos_casa !== null) {
-            const pc = palpite.palpite_casa;
-            const pf = palpite.palpite_fora;
-            const rc = m.golos_casa;
-            const rf = m.golos_fora;
-
-            if (pc === rc && pf === rf) {
-              pontos = 10;
-            } else {
-              const diffP = pc - pf;
-              const diffR = rc - rf;
-
-              const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
-              const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
-
-              if (vP === vR) pontos += 4;
-              if (pc === rc || pf === rf) pontos += 1;
-            }
-          }
-
-          bodyHTML += `
-            <td>
-              ${palpite.palpite_casa}-${palpite.palpite_fora} (${pontos} pts)
-            </td>`;
-        } else {
-          bodyHTML += `<td>-</td>`;
-        }
+      jogos.forEach(m => {
+        const res = m.golos_casa !== null ? `${m.golos_casa}-${m.golos_fora}` : "-";
+        html += `
+          <th>
+            ${m.equipa_casa} vs ${m.equipa_fora}
+            <br><small>${res}</small>
+          </th>`;
       });
 
-      bodyHTML += "</tr>";
+      html += "</tr></thead><tbody>";
+
+      players.forEach(p => {
+        html += `<tr><td class="fixo">${p.nome}</td>`;
+
+        jogos.forEach(m => {
+          const palpite = predictions.find(pr => pr.player_id === p.id && pr.match_id === m.id);
+
+          if (palpite) {
+            let pontos = 0;
+
+            if (m.golos_casa !== null) {
+              const pc = palpite.palpite_casa;
+              const pf = palpite.palpite_fora;
+              const rc = m.golos_casa;
+              const rf = m.golos_fora;
+
+              if (pc === rc && pf === rf) {
+                pontos = 10;
+              } else {
+                const diffP = pc - pf;
+                const diffR = rc - rf;
+
+                const vP = diffP > 0 ? "casa" : diffP < 0 ? "fora" : "empate";
+                const vR = diffR > 0 ? "casa" : diffR < 0 ? "fora" : "empate";
+
+                if (vP === vR) pontos += 4;
+                if (pc === rc || pf === rf) pontos += 1;
+              }
+            }
+
+            html += `<td>${pc}-${pf} (${pontos} pts)</td>`;
+          } else {
+            html += `<td>-</td>`;
+          }
+        });
+
+        html += "</tr>";
+      });
+
+      html += "</tbody></table></div>";
+
+      container.innerHTML += html;
     });
 
-    body.innerHTML = bodyHTML;
+    mostrarJornada();
   });
+}
+
+function mostrarJornada() {
+  const j = document.getElementById("select-jornada").value;
+
+  document.querySelectorAll(".jornada-box").forEach(div => {
+    div.style.display = "none";
+  });
+
+  document.getElementById(`jornada-${j}`).style.display = "block";
 }
 
 window.onload = () => {
