@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard</title>
+  <title>Craks da Bola</title>
 
   <style>
     body {
@@ -131,9 +131,9 @@
 <!-- ⭐ MENU LATERAL -->
 <div class="sidebar">
 
-  <h2>Home</h2>
+  <h2>Craks da Bola</h2>
   <ul>
-    <li onclick="mostrarSecao('home')">🏠 Home</li>
+    <li onclick="mostrarSecao('home')">🏠 Craks da Bola</li>
   </ul>
 
   <h2>Liga Portuguesa</h2>
@@ -150,7 +150,7 @@
 
   <!-- HOME -->
   <div id="home">
-    <h1>Dashboard</h1>
+    <h1>Craks da Bola</h1>
 
     <div class="card-container">
       <div class="card">
@@ -160,7 +160,7 @@
     </div>
 
     <p style="font-size:18px; margin-top:20px;">
-      Bem-vindo ao painel principal.  
+      Bem-vindo ao painel principal Craks da Bola.  
       Use o menu à esquerda para navegar pela Liga Portuguesa.
     </p>
   </div>
@@ -188,9 +188,20 @@
     </table>
   </div>
 
-  <!-- SECÇÃO PROGNÓSTICOS (TABELA UNIFICADA) -->
+  <!-- SECÇÃO PROGNÓSTICOS (TABELA UNIFICADA + INSERIR + EDITAR) -->
   <div class="section" id="prognosticos">
-    <h2>Todos os Prognósticos</h2>
+    <h2>Prognósticos</h2>
+
+    <!-- INSERIR PROGNÓSTICO -->
+    <select id="player-select"></select>
+    <select id="match-select"></select>
+
+    <input id="palpite-casa" type="number" placeholder="Golos casa" style="width:120px;">
+    <input id="palpite-fora" type="number" placeholder="Golos fora" style="width:120px;">
+
+    <button onclick="addPrediction()">Guardar Prognóstico</button>
+
+    <h3 style="margin-top:30px;">Tabela Completa</h3>
 
     <table>
       <thead>
@@ -200,6 +211,7 @@
           <th>Palpite</th>
           <th>Resultado Real</th>
           <th>Pontuação</th>
+          <th>Editar</th>
         </tr>
       </thead>
       <tbody id="tabela-unica"></tbody>
@@ -347,6 +359,76 @@ function recalcular(id) {
     });
 }
 
+// INSERIR PROGNÓSTICO
+function loadPlayers() {
+  fetch("/players")
+    .then(r => r.json())
+    .then(players => {
+      const sel = document.getElementById("player-select");
+      sel.innerHTML = "";
+      players.forEach(p => {
+        sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+      });
+    });
+}
+
+function loadMatchesForPredictions() {
+  fetch("/matches")
+    .then(r => r.json())
+    .then(matches => {
+      const sel = document.getElementById("match-select");
+      sel.innerHTML = "";
+      matches.forEach(m => {
+        sel.innerHTML += `<option value="${m.id}">
+          Jogo ${m.id}: ${m.equipa_casa} vs ${m.equipa_fora}
+        </option>`;
+      });
+    });
+}
+
+function addPrediction() {
+  const player_id = document.getElementById("player-select").value;
+  const match_id = document.getElementById("match-select").value;
+  const palpite_casa = parseInt(document.getElementById("palpite-casa").value);
+  const palpite_fora = parseInt(document.getElementById("palpite-fora").value);
+
+  fetch("/add-prediction", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ player_id, match_id, palpite_casa, palpite_fora })
+  }).then(() => {
+    alert("Prognóstico guardado!");
+    loadTabelaUnica();
+  });
+}
+
+// EDITAR PROGNÓSTICO
+function editarPrognostico(id, casa, fora) {
+  editId = id;
+  document.getElementById("edit-casa").value = casa;
+  document.getElementById("edit-fora").value = fora;
+  document.getElementById("edit-box").style.display = "block";
+}
+
+function fecharEdicao() {
+  document.getElementById("edit-box").style.display = "none";
+}
+
+function guardarEdicao() {
+  const palpite_casa = parseInt(document.getElementById("edit-casa").value);
+  const palpite_fora = parseInt(document.getElementById("edit-fora").value);
+
+  fetch(`/edit-prediction/${editId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ palpite_casa, palpite_fora })
+  })
+  .then(() => {
+    fecharEdicao();
+    loadTabelaUnica();
+  });
+}
+
 // TABELA UNIFICADA
 function loadTabelaUnica() {
   Promise.all([
@@ -398,6 +480,11 @@ function loadTabelaUnica() {
           <td>${p.palpite_casa} : ${p.palpite_fora}</td>
           <td>${resultadoReal}</td>
           <td>${pontos}</td>
+          <td>
+            <button class="btn-small" onclick="editarPrognostico(${p.id}, ${p.palpite_casa}, ${p.palpite_fora})">
+              Editar
+            </button>
+          </td>
         </tr>
       `;
     });
@@ -409,6 +496,8 @@ window.onload = () => {
   mostrarSecao("home");
   atualizarResumoJogadores();
   loadMatches();
+  loadPlayers();
+  loadMatchesForPredictions();
   loadTabelaUnica();
 };
 
