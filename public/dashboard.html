@@ -28,7 +28,7 @@
 <!-- ⭐ CONTEÚDO PRINCIPAL -->
 <div class="content">
 
-  <!-- HOME (AGORA DENTRO DE .section) -->
+  <!-- HOME -->
   <div class="section" id="home">
     <h1>Craks da Bola</h1>
 
@@ -118,7 +118,21 @@ function mostrarSecao(secao) {
   document.getElementById("prognosticos").style.display = "none";
 
   document.getElementById(secao).style.display = "block";
+
+  // Atualizar hash no URL
+  window.location.hash = secao;
 }
+
+// ⭐ SUPORTE PARA HASH (#jogos, #prognosticos, etc.)
+document.addEventListener("DOMContentLoaded", () => {
+  const hash = window.location.hash.replace("#", "");
+
+  if (hash && document.getElementById(hash)) {
+    mostrarSecao(hash);
+  } else {
+    mostrarSecao("home");
+  }
+});
 
 let editId = null;
 
@@ -363,16 +377,6 @@ function loadTabelaUnica() {
     });
   });
 }
-
-// ⭐ INICIALIZAÇÃO
-window.onload = () => {
-  mostrarSecao("home");
-  atualizarResumoJogadores();
-  loadMatches();
-  loadPlayers();
-  loadMatchesForPredictions();
-  loadTabelaUnica();
-};
 
 </script>
 
