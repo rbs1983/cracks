@@ -3,11 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <title>Dashboard</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      margin: 0;
       background: #fafafa;
+    }
+
+    /* MENU LATERAL */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 230px;
+      height: 100%;
+      background: #1e1e1e;
+      color: white;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+    }
+
+    .sidebar h2 {
+      margin-bottom: 25px;
+      font-size: 22px;
+      text-align: center;
+    }
+
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .sidebar ul li {
+      padding: 12px;
+      margin-bottom: 12px;
+      background: #333;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+      text-align: center;
+    }
+
+    .sidebar ul li:hover {
+      background: #555;
+    }
+
+    /* CONTEÚDO PRINCIPAL */
+    .content {
+      margin-left: 260px;
+      padding: 20px;
     }
 
     h1 {
@@ -82,6 +127,21 @@
 
 <body>
 
+<!-- ⭐ MENU LATERAL -->
+<div class="sidebar">
+  <h2>Liga Portuguesa</h2>
+  <ul>
+    <li onclick="window.location.href='ranking.html'">Classificação</li>
+    <li onclick="scrollToSection('jogos')">Jogos</li>
+    <li onclick="scrollToSection('prognosticos')">Prognósticos</li>
+    <li onclick="scrollToSection('resultados')">Resultados</li>
+    <li onclick="recalcularTudo()">Recalcular Tudo</li>
+  </ul>
+</div>
+
+<!-- ⭐ CONTEÚDO PRINCIPAL -->
+<div class="content">
+
   <h1>Dashboard</h1>
 
   <div class="card-container">
@@ -91,36 +151,14 @@
     </div>
   </div>
 
-  <button onclick="window.location.href='ranking.html'" style="margin-bottom:20px;">
-    Ver Classificação Final
-  </button>
+  <!-- SECÇÃO JOGOS -->
+  <div class="section" id="jogos">
+    <h2>Jogos</h2>
 
-  <!-- ⭐ NOVO BOTÃO -->
-  <button onclick="recalcularTudo()" style="margin-bottom:20px; background:#4CAF50; color:white;">
-    Recalcular Tudo
-  </button>
-
-  <div class="section">
-    <h2>Criar Jogo</h2>
     <input id="casa" placeholder="Equipa da casa">
     <input id="fora" placeholder="Equipa de fora">
-    <button onclick="addMatch()">Criar</button>
-  </div>
+    <button onclick="addMatch()">Criar Jogo</button>
 
-  <div class="section">
-    <h2>Inserir Prognóstico</h2>
-
-    <select id="player-select"></select>
-    <select id="match-select"></select>
-
-    <input id="palpite-casa" type="number" placeholder="Golos casa" style="width:120px;">
-    <input id="palpite-fora" type="number" placeholder="Golos fora" style="width:120px;">
-
-    <button onclick="addPrediction()">Guardar Prognóstico</button>
-  </div>
-
-  <div class="section">
-    <h2>Jogos</h2>
     <table>
       <thead>
         <tr>
@@ -136,8 +174,17 @@
     </table>
   </div>
 
-  <div class="section">
+  <!-- SECÇÃO PROGNÓSTICOS -->
+  <div class="section" id="prognosticos">
     <h2>Prognósticos</h2>
+
+    <select id="player-select"></select>
+    <select id="match-select"></select>
+
+    <input id="palpite-casa" type="number" placeholder="Golos casa" style="width:120px;">
+    <input id="palpite-fora" type="number" placeholder="Golos fora" style="width:120px;">
+
+    <button onclick="addPrediction()">Guardar Prognóstico</button>
 
     <table>
       <thead>
@@ -153,21 +200,33 @@
     </table>
   </div>
 
-  <!-- Popup editar -->
-  <div id="edit-box">
-    <h3>Editar Prognóstico</h3>
-    <input id="edit-casa" type="number" placeholder="Golos casa">
-    <input id="edit-fora" type="number" placeholder="Golos fora">
-    <br><br>
-    <button onclick="guardarEdicao()">Guardar</button>
-    <button onclick="fecharEdicao()">Cancelar</button>
+  <!-- SECÇÃO RESULTADOS -->
+  <div class="section" id="resultados">
+    <h2>Resultados</h2>
+    <p>Os resultados são mostrados automaticamente na tabela de jogos e prognósticos.</p>
   </div>
+
+</div>
+
+<!-- POPUP EDITAR -->
+<div id="edit-box">
+  <h3>Editar Prognóstico</h3>
+  <input id="edit-casa" type="number" placeholder="Golos casa">
+  <input id="edit-fora" type="number" placeholder="Golos fora">
+  <br><br>
+  <button onclick="guardarEdicao()">Guardar</button>
+  <button onclick="fecharEdicao()">Cancelar</button>
+</div>
 
 <script>
 
+function scrollToSection(id) {
+  document.getElementById(id).scrollIntoView({ behavior: "smooth" });
+}
+
 let editId = null;
 
-// ⭐ NOVA FUNÇÃO — Recalcular Tudo
+// ⭐ Recalcular tudo
 function recalcularTudo() {
   fetch("/recalculate-all", { method: "POST" })
     .then(r => r.json())
