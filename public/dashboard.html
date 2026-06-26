@@ -51,6 +51,11 @@
 
     <input id="casa" placeholder="Equipa da casa">
     <input id="fora" placeholder="Equipa de fora">
+
+    <select id="jornada-select">
+      <option value="">Jornada...</option>
+    </select>
+
     <button onclick="addMatch()">Criar Jogo</button>
 
     <table>
@@ -59,6 +64,7 @@
           <th>ID</th>
           <th>Casa</th>
           <th>Fora</th>
+          <th>Jornada</th>
           <th>Resultado</th>
           <th>Processado</th>
           <th>Ações</th>
@@ -128,11 +134,21 @@ function atualizarResumoJogadores() {
 function addMatch() {
   const casa = document.getElementById("casa").value;
   const fora = document.getElementById("fora").value;
+  const jornada = parseInt(document.getElementById("jornada-select").value);
+
+  if (!jornada) {
+    alert("Escolhe a jornada!");
+    return;
+  }
 
   fetch("/add-match", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ equipa_casa: casa, equipa_fora: fora })
+    body: JSON.stringify({ 
+      equipa_casa: casa, 
+      equipa_fora: fora,
+      jornada: jornada
+    })
   }).then(() => {
     loadMatches();
     loadTabelaMatriz();
@@ -152,6 +168,7 @@ function loadMatches() {
             <td>${m.id}</td>
             <td>${m.equipa_casa}</td>
             <td>${m.equipa_fora}</td>
+            <td>${m.jornada}</td>
             <td>${m.golos_casa ?? "-"} : ${m.golos_fora ?? "-"}</td>
             <td>${m.processado ? "Sim" : "Não"}</td>
             <td>
@@ -250,10 +267,10 @@ function loadTabelaMatriz() {
     const container = document.getElementById("matrizes-jornadas");
     container.innerHTML = "";
 
-    // Agrupar jogos por jornada (4 jogos por jornada)
+    // Agrupar jogos por jornada
     const jornadas = {};
     matches.forEach(m => {
-      const jornada = Math.ceil(m.id / 4);
+      const jornada = m.jornada;
       if (!jornadas[jornada]) jornadas[jornada] = [];
       jornadas[jornada].push(m);
     });
@@ -348,6 +365,13 @@ window.onload = () => {
   mostrarSecao("home");
   atualizarResumoJogadores();
   loadMatches();
+
+  // Preencher jornadas 1 a 34
+  const jornadaSel = document.getElementById("jornada-select");
+  for (let i = 1; i <= 34; i++) {
+    jornadaSel.innerHTML += `<option value="${i}">Jornada ${i}</option>`;
+  }
+
   loadPlayers().then(players => {
     const sel = document.getElementById("player-select");
     sel.innerHTML = "";
@@ -355,6 +379,7 @@ window.onload = () => {
       sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
     });
   });
+
   loadMatchesForPredictions();
   loadTabelaMatriz();
 };
