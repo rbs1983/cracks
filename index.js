@@ -1,14 +1,10 @@
 const express = require("express");
-const cors = require("cors");
-const path = require("path");
 const fs = require("fs");
-
+const path = require("path");
 const app = express();
-app.use(cors());
-app.use(express.json());
 
-// Servir a pasta public
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.json());
+app.use(express.static("public"));
 
 // Função para carregar JSON
 function loadJSON(file) {
@@ -16,94 +12,84 @@ function loadJSON(file) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
-// Função para guardar JSON
+// Função para gravar JSON
 function saveJSON(file, data) {
   const filePath = path.join(__dirname, "data", file);
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
-// -----------------------------
-// ROTAS GET
-// -----------------------------
+/* ============================
+   ENDPOINTS DOS JOGOS
+============================ */
 
-app.get("/classificacao", (req, res) => {
-  res.json(loadJSON("classificacao.json"));
-});
-
+// Obter todos os jogos
 app.get("/jogos", (req, res) => {
-  res.json(loadJSON("jogos.json"));
-});
-
-app.get("/palpites", (req, res) => {
-  res.json(loadJSON("palpites.json"));
-});
-
-// -----------------------------
-// ROTAS POST
-// -----------------------------
-
-// Criar jogo (com jornada)
-app.post("/add-jogo", (req, res) => {
   const jogos = loadJSON("jogos.json");
+  res.json(jogos);
+});
 
-  const novoJogo = {
-    jornada: req.body.jornada,
-    casa: req.body.casa,
-    fora: req.body.fora
-  };
+// Criar jogo
+app.post("/add-jogo", (req, res) => {
+  const novoJogo = req.body;
 
+  const jogos = loadJSON("jogos.json");
   jogos.push(novoJogo);
+
   saveJSON("jogos.json", jogos);
 
-  res.json({ message: "Jogo criado!", jogo: novoJogo });
+  res.json({ success: true });
 });
 
-// Adicionar palpite
-app.post("/add-palpite", (req, res) => {
-  const palpites = loadJSON("palpites.json");
+// Apagar jogo
+app.post("/delete-jogo", (req, res) => {
+  const { index } = req.body;
 
-  const novoPalpite = {
-    jogo: req.body.jogo,
-    user: req.body.user,
-    palpite: req.body.palpite,
-    pontos: req.body.pontos
-  };
+  const jogos = loadJSON("jogos.json");
 
-  palpites.push(novoPalpite);
-  saveJSON("palpites.json", palpites);
-
-  res.json({ message: "Palpite adicionado!", palpite: novoPalpite });
-});
-
-// Atualizar classificação
-app.post("/add-classificacao", (req, res) => {
-  const classificacao = loadJSON("classificacao.json");
-
-  const novaEquipa = {
-    pos: req.body.pos,
-    nome: req.body.nome,
-    pontos: req.body.pontos
-  };
-
-  const index = classificacao.findIndex(e => e.pos === novaEquipa.pos);
-
-  if (index >= 0) {
-    classificacao[index] = novaEquipa;
-  } else {
-    classificacao.push(novaEquipa);
+  if (index < 0 || index >= jogos.length) {
+    return res.json({ success: false, message: "Índice inválido" });
   }
 
-  classificacao.sort((a, b) => a.pos - b.pos);
+  jogos.splice(index, 1);
+  saveJSON("jogos.json", jogos);
 
-  saveJSON("classificacao.json", classificacao);
-
-  res.json({ message: "Classificação atualizada!", equipa: novaEquipa });
+  res.json({ success: true });
 });
 
-// -----------------------------
-// PORTA
-// -----------------------------
+/* ============================
+   ENDPOINTS DA CLASSIFICAÇÃO
+============================ */
+
+app.get("/classificacao", (req, res) => {
+  const tabela = loadJSON("classificacao.json");
+  res.json(tabela);
+});
+
+/* ============================
+   ENDPOINTS DOS PALPITES
+============================ */
+
+app.get("/palpites", (req, res) => {
+  const palpites = loadJSON("palpites.json");
+  res.json(palpites);
+});
+
+app.post("/add-palpite", (req, res) => {
+  const novoPalpite = req.body;
+
+  const palpites = loadJSON("palpites.json");
+  palpites.push(novoPalpite);
+
+  saveJSON("palpites.json", palpites);
+
+  res.json({ success: true });
+});
+
+/* ============================
+   INICIAR SERVIDOR
+============================ */
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log("API ativa na porta " + PORT);
+  console.log("Servidor a correr na porta " + PORT);
 });
