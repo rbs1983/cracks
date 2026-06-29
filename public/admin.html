@@ -13,7 +13,6 @@
       display: flex;
     }
 
-    /* MENU LATERAL */
     .sidebar {
       width: 220px;
       background: #1e293b;
@@ -46,7 +45,6 @@
       background: #1d4ed8;
     }
 
-    /* CONTEÚDO PRINCIPAL */
     .content {
       margin-left: 240px;
       padding: 20px;
@@ -59,7 +57,7 @@
       border-radius: 8px;
       margin-bottom: 25px;
       border: 1px solid #334155;
-      display: none; /* escondido por padrão */
+      display: none;
     }
 
     label {
@@ -93,6 +91,18 @@
       background: #1d4ed8;
     }
 
+    .deleteBtn {
+      background: #dc2626;
+      padding: 5px 10px;
+      border-radius: 6px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+
+    .deleteBtn:hover {
+      background: #b91c1c;
+    }
+
     .msg {
       margin-top: 10px;
       padding: 10px;
@@ -106,19 +116,14 @@
 
 <body>
 
-  <!-- MENU LATERAL -->
   <div class="sidebar">
     <h2>Admin</h2>
     <button onclick="mostrarSecao('criarJogo')">Criar Jogos</button>
     <button onclick="mostrarSecao('verJogos')">Ver Jogos por Jornada</button>
   </div>
 
-  <!-- CONTEÚDO -->
   <div class="content">
 
-    <!-- ============================
-         CRIAR JOGO
-    ============================= -->
     <div id="criarJogo" class="section">
       <h2>Criar Jogo</h2>
 
@@ -138,9 +143,6 @@
       <div id="listaCriarJogos"></div>
     </div>
 
-    <!-- ============================
-         VER JOGOS POR JORNADA
-    ============================= -->
     <div id="verJogos" class="section">
       <h2>Ver Jogos por Jornada</h2>
 
@@ -155,7 +157,6 @@
   </div>
 
   <script>
-    // Mostrar secções
     function mostrarSecao(id) {
       document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
       document.getElementById(id).style.display = 'block';
@@ -163,7 +164,6 @@
       if (id === "criarJogo") carregarJogosCriados();
     }
 
-    // Preencher dropdowns de jornada
     const jornadaSelect = document.getElementById("jornada");
     const verJornadaSelect = document.getElementById("verJornada");
 
@@ -179,7 +179,6 @@
       verJornadaSelect.appendChild(opt2);
     }
 
-    // Mensagens
     function showMsg(id, texto) {
       const div = document.getElementById(id);
       div.innerText = texto;
@@ -187,7 +186,6 @@
       setTimeout(() => div.style.display = "none", 3000);
     }
 
-    // Criar jogo
     async function addJogo() {
       const body = {
         jornada: Number(document.getElementById("jornada").value),
@@ -195,19 +193,16 @@
         fora: document.getElementById("fora").value
       };
 
-      const res = await fetch("/add-jogo", {
+      await fetch("/add-jogo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
 
-      const data = await res.json();
       showMsg("msgJogo", "Jogo criado com sucesso!");
-
-      carregarJogosCriados(); // atualizar lista imediatamente
+      carregarJogosCriados();
     }
 
-    // Ver jogos por jornada
     async function carregarJogos() {
       const jornadaEscolhida = Number(document.getElementById("verJornada").value);
       const listaDiv = document.getElementById("listaJogos");
@@ -231,7 +226,6 @@
       listaDiv.innerHTML = html;
     }
 
-    // Carregar jogos criados (último primeiro)
     async function carregarJogosCriados() {
       const listaDiv = document.getElementById("listaCriarJogos");
 
@@ -241,15 +235,28 @@
       const ordenados = jogos.slice().reverse();
 
       let html = "<ul>";
-      ordenados.forEach(j => {
-        html += `<li>Jornada ${j.jornada}: ${j.casa} vs ${j.fora}</li>`;
+      ordenados.forEach((j, index) => {
+        html += `
+          <li>
+            Jornada ${j.jornada}: ${j.casa} vs ${j.fora}
+            <span class="deleteBtn" onclick="apagarJogo(${jogos.length - 1 - index})">Apagar</span>
+          </li>`;
       });
       html += "</ul>";
 
       listaDiv.innerHTML = html;
     }
 
-    // Mostrar secção inicial
+    async function apagarJogo(index) {
+      await fetch("/delete-jogo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ index })
+      });
+
+      carregarJogosCriados();
+    }
+
     mostrarSecao('criarJogo');
   </script>
 
