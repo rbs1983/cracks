@@ -32,7 +32,7 @@
       font-weight: bold;
     }
 
-    input {
+    input, select {
       width: 100%;
       padding: 8px;
       margin-top: 5px;
@@ -72,9 +72,17 @@
 
   <h1>Painel de Administração</h1>
 
-  <!-- ADICIONAR JOGO -->
+  <!-- ============================
+       CRIAR JOGO (ATUALIZADO)
+  ============================= -->
   <div class="section">
     <h2>Criar Jogo</h2>
+
+    <label>Jornada</label>
+    <select id="jornada">
+      <!-- Jornadas 1 a 34 -->
+      ${Array.from({ length: 34 }, (_, i) => `<option value="${i+1}">Jornada ${i+1}</option>`).join("")}
+    </select>
 
     <label>Equipa da Casa</label>
     <input id="casa" type="text">
@@ -84,43 +92,6 @@
 
     <button onclick="addJogo()">Criar Jogo</button>
     <div id="msgJogo" class="msg"></div>
-  </div>
-
-  <!-- ADICIONAR PALPITE -->
-  <div class="section">
-    <h2>Adicionar Palpite</h2>
-
-    <label>Jogo</label>
-    <input id="jogo" type="text">
-
-    <label>Utilizador</label>
-    <input id="user" type="text">
-
-    <label>Palpite</label>
-    <input id="palpite" type="text">
-
-    <label>Pontos</label>
-    <input id="pontos" type="number">
-
-    <button onclick="addPalpite()">Adicionar Palpite</button>
-    <div id="msgPalpite" class="msg"></div>
-  </div>
-
-  <!-- ATUALIZAR CLASSIFICAÇÃO -->
-  <div class="section">
-    <h2>Atualizar Classificação</h2>
-
-    <label>Posição</label>
-    <input id="pos" type="number">
-
-    <label>Nome da Equipa</label>
-    <input id="nome" type="text">
-
-    <label>Pontos</label>
-    <input id="pontosClass" type="number">
-
-    <button onclick="addClassificacao()">Atualizar Classificação</button>
-    <div id="msgClass" class="msg"></div>
   </div>
 
   <script>
@@ -133,6 +104,7 @@
 
     async function addJogo() {
       const body = {
+        jornada: Number(document.getElementById("jornada").value),
         casa: document.getElementById("casa").value,
         fora: document.getElementById("fora").value
       };
@@ -145,41 +117,6 @@
 
       const data = await res.json();
       showMsg("msgJogo", "Jogo criado com sucesso!");
-    }
-
-    async function addPalpite() {
-      const body = {
-        jogo: document.getElementById("jogo").value,
-        user: document.getElementById("user").value,
-        palpite: document.getElementById("palpite").value,
-        pontos: Number(document.getElementById("pontos").value)
-      };
-
-      const res = await fetch("/add-palpite", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-
-      const data = await res.json();
-      showMsg("msgPalpite", "Palpite adicionado com sucesso!");
-    }
-
-    async function addClassificacao() {
-      const body = {
-        pos: Number(document.getElementById("pos").value),
-        nome: document.getElementById("nome").value,
-        pontos: Number(document.getElementById("pontosClass").value)
-      };
-
-      const res = await fetch("/add-classificacao", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-
-      const data = await res.json();
-      showMsg("msgClass", "Classificação atualizada!");
     }
   </script>
 
