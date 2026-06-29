@@ -83,6 +83,28 @@ app.post("/update-resultado", (req, res) => {
 });
 
 /* ============================
+   ENDPOINTS — PROGNÓSTICOS
+============================ */
+
+// Guardar prognóstico
+app.post("/add-prognostico", (req, res) => {
+  const novo = req.body;
+
+  const lista = loadJSON("prognosticos.json");
+  lista.push(novo);
+
+  saveJSON("prognosticos.json", lista);
+
+  res.json({ success: true });
+});
+
+// Obter prognósticos
+app.get("/prognosticos", (req, res) => {
+  const lista = loadJSON("prognosticos.json");
+  res.json(lista);
+});
+
+/* ============================
    ENDPOINTS — CLASSIFICAÇÃO
 ============================ */
 
@@ -92,7 +114,7 @@ app.get("/classificacao", (req, res) => {
 });
 
 /* ============================
-   ENDPOINTS — PALPITES
+   ENDPOINTS — PALPITES (se precisares)
 ============================ */
 
 app.get("/palpites", (req, res) => {
