@@ -6,20 +6,22 @@ const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
-// Função para carregar JSON
+/* ============================
+   FUNÇÕES PARA JSON
+============================ */
+
 function loadJSON(file) {
   const filePath = path.join(__dirname, "data", file);
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
-// Função para gravar JSON
 function saveJSON(file, data) {
   const filePath = path.join(__dirname, "data", file);
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
 /* ============================
-   ENDPOINTS DOS JOGOS
+   ENDPOINTS — JOGOS
 ============================ */
 
 // Obter todos os jogos
@@ -56,8 +58,32 @@ app.post("/delete-jogo", (req, res) => {
   res.json({ success: true });
 });
 
+// Atualizar resultado do jogo
+app.post("/update-resultado", (req, res) => {
+  const { jornada, casa, fora, golosCasa, golosFora } = req.body;
+
+  const jogos = loadJSON("jogos.json");
+
+  const index = jogos.findIndex(j =>
+    j.jornada === jornada &&
+    j.casa === casa &&
+    j.fora === fora
+  );
+
+  if (index === -1) {
+    return res.json({ success: false, message: "Jogo não encontrado" });
+  }
+
+  jogos[index].golosCasa = golosCasa;
+  jogos[index].golosFora = golosFora;
+
+  saveJSON("jogos.json", jogos);
+
+  res.json({ success: true });
+});
+
 /* ============================
-   ENDPOINTS DA CLASSIFICAÇÃO
+   ENDPOINTS — CLASSIFICAÇÃO
 ============================ */
 
 app.get("/classificacao", (req, res) => {
@@ -66,7 +92,7 @@ app.get("/classificacao", (req, res) => {
 });
 
 /* ============================
-   ENDPOINTS DOS PALPITES
+   ENDPOINTS — PALPITES
 ============================ */
 
 app.get("/palpites", (req, res) => {
