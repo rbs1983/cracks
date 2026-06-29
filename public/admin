@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel Admin - Liga Portuguesa</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #f97316;
+      margin-bottom: 10px;
+    }
+
+    .section {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      border: 1px solid #334155;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 6px;
+      border: none;
+      background: #334155;
+      color: white;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 15px;
+      background: #2563eb;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .msg {
+      margin-top: 10px;
+      padding: 10px;
+      background: #22c55e;
+      color: black;
+      border-radius: 6px;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Painel de Administração</h1>
+
+  <!-- ADICIONAR JOGO -->
+  <div class="section">
+    <h2>Adicionar Jogo</h2>
+
+    <label>Equipa da Casa</label>
+    <input id="casa" type="text">
+
+    <label>Golos da Casa</label>
+    <input id="golosCasa" type="number">
+
+    <label>Golos de Fora</label>
+    <input id="golosFora" type="number">
+
+    <label>Equipa de Fora</label>
+    <input id="fora" type="text">
+
+    <button onclick="addJogo()">Adicionar Jogo</button>
+    <div id="msgJogo" class="msg"></div>
+  </div>
+
+  <!-- ADICIONAR PALPITE -->
+  <div class="section">
+    <h2>Adicionar Palpite</h2>
+
+    <label>Jogo</label>
+    <input id="jogo" type="text">
+
+    <label>Utilizador</label>
+    <input id="user" type="text">
+
+    <label>Palpite</label>
+    <input id="palpite" type="text">
+
+    <label>Pontos</label>
+    <input id="pontos" type="number">
+
+    <button onclick="addPalpite()">Adicionar Palpite</button>
+    <div id="msgPalpite" class="msg"></div>
+  </div>
+
+  <!-- ATUALIZAR CLASSIFICAÇÃO -->
+  <div class="section">
+    <h2>Atualizar Classificação</h2>
+
+    <label>Posição</label>
+    <input id="pos" type="number">
+
+    <label>Nome da Equipa</label>
+    <input id="nome" type="text">
+
+    <label>Pontos</label>
+    <input id="pontosClass" type="number">
+
+    <button onclick="addClassificacao()">Atualizar Classificação</button>
+    <div id="msgClass" class="msg"></div>
+  </div>
+
+  <script>
+    const API = {
+      addJogo: "/add-jogo",
+      addPalpite: "/add-palpite",
+      addClassificacao: "/add-classificacao"
+    };
+
+    function showMsg(id, texto) {
+      const div = document.getElementById(id);
+      div.innerText = texto;
+      div.style.display = "block";
+      setTimeout(() => div.style.display = "none", 3000);
+    }
+
+    async function addJogo() {
+      const body = {
+        casa: document.getElementById("casa").value,
+        golosCasa: Number(document.getElementById("golosCasa").value),
+        golosFora: Number(document.getElementById("golosFora").value),
+        fora: document.getElementById("fora").value
+      };
+
+      const res = await fetch(API.addJogo, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+      showMsg("msgJogo", "Jogo adicionado com sucesso!");
+    }
+
+    async function addPalpite() {
+      const body = {
+        jogo: document.getElementById("jogo").value,
+        user: document.getElementById("user").value,
+        palpite: document.getElementById("palpite").value,
+        pontos: Number(document.getElementById("pontos").value)
+      };
+
+      const res = await fetch(API.addPalpite, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+      showMsg("msgPalpite", "Palpite adicionado com sucesso!");
+    }
+
+    async function addClassificacao() {
+      const body = {
+        pos: Number(document.getElementById("pos").value),
+        nome: document.getElementById("nome").value,
+        pontos: Number(document.getElementById("pontosClass").value)
+      };
+
+      const res = await fetch(API.addClassificacao, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+      showMsg("msgClass", "Classificação atualizada!");
+    }
+  </script>
+
+</body>
+</html>
