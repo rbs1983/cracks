@@ -73,16 +73,13 @@
   <h1>Painel de Administração</h1>
 
   <!-- ============================
-       CRIAR JOGO (ATUALIZADO)
+       CRIAR JOGO (CORRIGIDO)
   ============================= -->
   <div class="section">
     <h2>Criar Jogo</h2>
 
     <label>Jornada</label>
-    <select id="jornada">
-      <!-- Jornadas 1 a 34 -->
-      ${Array.from({ length: 34 }, (_, i) => `<option value="${i+1}">Jornada ${i+1}</option>`).join("")}
-    </select>
+    <select id="jornada"></select>
 
     <label>Equipa da Casa</label>
     <input id="casa" type="text">
@@ -95,6 +92,15 @@
   </div>
 
   <script>
+    // Gerar jornadas 1 a 34
+    const jornadaSelect = document.getElementById("jornada");
+    for (let i = 1; i <= 34; i++) {
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = "Jornada " + i;
+      jornadaSelect.appendChild(opt);
+    }
+
     function showMsg(id, texto) {
       const div = document.getElementById(id);
       div.innerText = texto;
