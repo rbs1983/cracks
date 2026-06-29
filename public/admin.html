@@ -48,7 +48,7 @@
     .content {
       margin-left: 240px;
       padding: 20px;
-      width: 100%;
+      width: calc(100% - 240px);
     }
 
     .section {
@@ -60,148 +60,49 @@
       display: none;
     }
 
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border-radius: 6px;
-      border: none;
-      background: #334155;
-      color: white;
-    }
-
-    button.action {
-      margin-top: 15px;
-      padding: 10px 15px;
-      background: #2563eb;
-      border: none;
-      border-radius: 6px;
-      color: white;
-      cursor: pointer;
-      font-size: 1rem;
-    }
-
-    button.action:hover {
-      background: #1d4ed8;
-    }
-
-    .deleteBtn {
-      background: #f87171;
-      color: #1e293b;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      border: none;
-      transition: 0.2s;
-    }
-
-    .deleteBtn:hover {
-      background: #ef4444;
-      color: white;
-    }
-
-    .msg {
-      margin-top: 10px;
-      padding: 10px;
-      background: #22c55e;
-      color: black;
-      border-radius: 6px;
-      display: none;
-    }
-
-    /* ============================
-       RESULTADOS
-    ============================= */
-
-    .resultCard {
-      background: #1e293b;
-      padding: 15px;
-      border-radius: 10px;
-      border: 1px solid #334155;
-      margin-bottom: 20px;
-    }
-
-    .resultHeader {
-      font-size: 1.1rem;
-      margin-bottom: 10px;
-      font-weight: bold;
-    }
-
-    .resultTeams {
-      margin-bottom: 15px;
-    }
-
-    .resultInputs {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 15px;
-    }
-
-    .resultInputs div {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .resultInputs input {
-      width: 80px;
-      padding: 8px;
-      border-radius: 6px;
-      border: none;
-      background: #475569;
-      color: white;
-      font-size: 1rem;
-      text-align: center;
-    }
-
-    .resultButtons {
-      margin-top: 10px;
-    }
-
     /* ============================
        PROGNÓSTICOS
     ============================= */
 
-    .jogadorBtn {
-      background: #334155;
-      padding: 10px;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      text-align: center;
-      transition: 0.2s;
+    #cardsJogos {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding-bottom: 10px;
     }
 
-    .jogadorBtn:hover {
-      background: #475569;
-    }
-
-    .progCard {
+    .cardJogo {
       background: #1e293b;
       padding: 15px;
       border-radius: 10px;
       border: 1px solid #334155;
-      margin-bottom: 20px;
+      min-width: 300px;
     }
 
-    .progInputs {
-      display: flex;
-      gap: 20px;
-      margin-top: 10px;
-    }
-
-    .progInputs input {
-      width: 80px;
+    .resultadoReal {
+      background: #475569;
       padding: 8px;
       border-radius: 6px;
+      margin-bottom: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .tabelaPrognosticos {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .tabelaPrognosticos td {
+      padding: 6px;
+    }
+
+    .tabelaPrognosticos input {
+      width: 50px;
+      padding: 5px;
+      background: #334155;
       border: none;
-      background: #475569;
+      border-radius: 6px;
       color: white;
       text-align: center;
     }
@@ -220,56 +121,25 @@
   <div class="content">
 
     <!-- ============================
-         CRIAR JOGO
-    ============================= -->
-    <div id="criarJogo" class="section">
-      <h2>Criar Jogo</h2>
-
-      <label>Jornada</label>
-      <select id="jornada"></select>
-
-      <label>Equipa da Casa</label>
-      <input id="casa" type="text">
-
-      <label>Equipa de Fora</label>
-      <input id="fora" type="text">
-
-      <button class="action" onclick="addJogo()">Criar Jogo</button>
-      <div id="msgJogo" class="msg"></div>
-
-      <h3>Jogos Criados</h3>
-      <div id="listaCriarJogos"></div>
-    </div>
-
-    <!-- ============================
-         RESULTADOS DOS JOGOS
-    ============================= -->
-    <div id="verJogos" class="section">
-      <h2>Resultados dos Jogos</h2>
-
-      <h3>Inserir Resultado</h3>
-      <div id="listaResultadosInserir"></div>
-
-      <h3>Jogos Realizados</h3>
-      <div id="listaResultadosGuardados"></div>
-    </div>
-
-    <!-- ============================
          PROGNÓSTICOS
     ============================= -->
     <div id="prognosticos" class="section">
       <h2>Prognósticos</h2>
 
-      <div style="display: flex; gap: 20px;">
+      <label>Selecionar Jornada</label>
+      <select id="selectJornadaPrognosticos" onchange="carregarPrognosticosJornada()"></select>
 
+      <div style="display: flex; gap: 20px; margin-top: 20px;">
+        
+        <!-- COLUNA ESQUERDA: JOGADORES FIXOS -->
         <div style="width: 220px;">
           <h3>Jogadores</h3>
-          <div id="listaJogadores"></div>
+          <div id="listaJogadoresFixos"></div>
         </div>
 
-        <div style="flex: 1;">
-          <h3>Prognósticos do Jogador</h3>
-          <div id="listaPrognosticos"></div>
+        <!-- COLUNA DIREITA: 4 CARDS DOS JOGOS -->
+        <div style="flex: 1; overflow-x: auto;">
+          <div id="cardsJogos"></div>
         </div>
 
       </div>
@@ -279,251 +149,11 @@
 
   <script>
 
-    /* ============================
-         NAVEGAÇÃO ENTRE SECÇÕES
-    ============================= */
-
     function mostrarSecao(id) {
       document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
       document.getElementById(id).style.display = 'block';
 
-      if (id === "criarJogo") carregarJogosCriados();
-      if (id === "verJogos") carregarResultados();
-      if (id === "prognosticos") carregarJogadores();
-    }
-
-    /* ============================
-         CRIAR JOGO
-    ============================= */
-
-    const jornadaSelect = document.getElementById("jornada");
-
-    for (let i = 1; i <= 34; i++) {
-      const opt = document.createElement("option");
-      opt.value = i;
-      opt.textContent = "Jornada " + i;
-      jornadaSelect.appendChild(opt);
-    }
-
-    function showMsg(id, texto) {
-      const div = document.getElementById(id);
-      div.innerText = texto;
-      div.style.display = "block";
-      setTimeout(() => div.style.display = "none", 3000);
-    }
-
-    async function addJogo() {
-      const body = {
-        jornada: Number(document.getElementById("jornada").value),
-        casa: document.getElementById("casa").value,
-        fora: document.getElementById("fora").value
-      };
-
-      await fetch("/add-jogo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-
-      showMsg("msgJogo", "Jogo criado com sucesso!");
-      carregarJogosCriados();
-    }
-
-    async function carregarJogosCriados() {
-      const listaDiv = document.getElementById("listaCriarJogos");
-
-      const res = await fetch("/jogos");
-      const jogos = await res.json();
-
-      let html = "<ul>";
-      for (let i = jogos.length - 1; i >= 0; i--) {
-        const j = jogos[i];
-        html += `
-          <li>
-            Jornada ${j.jornada}: ${j.casa} vs ${j.fora}
-            <button class="deleteBtn" onclick="apagarJogo(${i})">Apagar</button>
-          </li>`;
-      }
-      html += "</ul>";
-
-      listaDiv.innerHTML = html;
-    }
-
-    async function apagarJogo(index) {
-      const res = await fetch("/delete-jogo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ index })
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        carregarJogosCriados();
-      } else {
-        alert("Erro ao apagar jogo.");
-      }
-    }
-
-    /* ============================
-         RESULTADOS DOS JOGOS
-    ============================= */
-
-    async function carregarResultados() {
-      const inserirDiv = document.getElementById("listaResultadosInserir");
-      const guardadosDiv = document.getElementById("listaResultadosGuardados");
-
-      const res = await fetch("/jogos");
-      const jogos = await res.json();
-
-      const ordenados = jogos.slice().sort((a, b) => b.jornada - a.jornada);
-
-      let htmlInserir = "";
-      let htmlGuardados = "";
-
-      ordenados.forEach((j, index) => {
-        const temResultado = j.golosCasa !== undefined && j.golosFora !== undefined;
-
-        if (!temResultado) {
-          htmlInserir += `
-            <div class="resultCard">
-              <div class="resultHeader">Jornada ${j.jornada}</div>
-
-              <div class="resultTeams">
-                <strong>${j.casa}</strong> vs <strong>${j.fora}</strong>
-              </div>
-
-              <div class="resultInputs">
-                <div>
-                  <label>Golos ${j.casa}</label>
-                  <input id="golosCasa_${index}" type="number" min="0">
-                </div>
-
-                <div>
-                  <label>Golos ${j.fora}</label>
-                  <input id="golosFora_${index}" type="number" min="0">
-                </div>
-              </div>
-
-              <div class="resultButtons">
-                <button class="action" onclick="guardarResultado(${index})">Guardar Resultado</button>
-              </div>
-            </div>
-          `;
-        } else {
-          htmlGuardados += `
-            <div class="resultCard">
-              <div class="resultHeader">Jornada ${j.jornada}</div>
-
-              <div class="resultTeams">
-                <strong>${j.casa}</strong> ${j.golosCasa} - ${j.golosFora} <strong>${j.fora}</strong>
-              </div>
-
-              <div class="resultButtons">
-                <button class="action" onclick="editarResultado(${index})">Editar</button>
-              </div>
-            </div>
-          `;
-        }
-      });
-
-      inserirDiv.innerHTML = htmlInserir;
-      guardadosDiv.innerHTML = htmlGuardados;
-
-      window.jogosOrdenados = ordenados;
-    }
-
-    async function guardarResultado(index) {
-      const jogo = window.jogosOrdenados[index];
-
-      const golosCasa = Number(document.getElementById(`golosCasa_${index}`).value);
-      const golosFora = Number(document.getElementById(`golosFora_${index}`).value);
-
-      const body = {
-        jornada: jogo.jornada,
-        casa: jogo.casa,
-        fora: jogo.fora,
-        golosCasa,
-        golosFora
-      };
-
-      const res = await fetch("/update-resultado", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        carregarResultados();
-      } else {
-        alert("Erro ao guardar resultado.");
-      }
-    }
-
-    function editarResultado(index) {
-      const jogo = window.jogosOrdenados[index];
-
-      const guardadosDiv = document.getElementById("listaResultadosGuardados");
-
-      const editarDiv = document.createElement("div");
-      editarDiv.className = "resultCard";
-      editarDiv.style.border = "2px solid #2563eb";
-
-      editarDiv.innerHTML = `
-        <div class="resultHeader">Editar Resultado — Jornada ${jogo.jornada}</div>
-
-        <div class="resultTeams">
-          <strong>${jogo.casa}</strong> vs <strong>${jogo.fora}</strong>
-        </div>
-
-        <div class="resultInputs">
-          <div>
-            <label>Golos ${jogo.casa}</label>
-            <input id="editCasa" type="number" min="0" value="${jogo.golosCasa}">
-          </div>
-
-          <div>
-            <label>Golos ${jogo.fora}</label>
-            <input id="editFora" type="number" min="0" value="${jogo.golosFora}">
-          </div>
-        </div>
-
-        <div class="resultButtons">
-          <button class="action" onclick="guardarEdicao(${index})">Guardar Alteração</button>
-        </div>
-      `;
-
-      guardadosDiv.prepend(editarDiv);
-    }
-
-    async function guardarEdicao(index) {
-      const jogo = window.jogosOrdenados[index];
-
-      const golosCasa = Number(document.getElementById("editCasa").value);
-      const golosFora = Number(document.getElementById("editFora").value);
-
-      const body = {
-        jornada: jogo.jornada,
-        casa: jogo.casa,
-        fora: jogo.fora,
-        golosCasa,
-        golosFora
-      };
-
-      const res = await fetch("/update-resultado", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        carregarResultados();
-      } else {
-        alert("Erro ao editar resultado.");
-      }
+      if (id === "prognosticos") carregarPrognosticosJornada();
     }
 
     /* ============================
@@ -536,72 +166,92 @@
       "Bruno Marques"
     ];
 
-    function carregarJogadores() {
-      const div = document.getElementById("listaJogadores");
+    const selectJornadaPrognosticos = document.getElementById("selectJornadaPrognosticos");
 
-      let html = "";
-      jogadoresFixos.forEach(nome => {
-        html += `
-          <div class="jogadorBtn" onclick="selecionarJogador('${nome}')">
-            ${nome}
-          </div>
-        `;
-      });
+    for (let i = 1; i <= 34; i++) {
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = "Jornada " + i;
+      selectJornadaPrognosticos.appendChild(opt);
+    }
 
+    function mostrarJogadoresFixos() {
+      const div = document.getElementById("listaJogadoresFixos");
+      let html = "<ul>";
+      jogadoresFixos.forEach(j => html += `<li>${j}</li>`);
+      html += "</ul>";
       div.innerHTML = html;
     }
 
-    async function selecionarJogador(nomeJogador) {
-      window.jogadorAtual = nomeJogador;
+    async function carregarPrognosticosJornada() {
+      mostrarJogadoresFixos();
 
-      const div = document.getElementById("listaPrognosticos");
-
+      const jornada = Number(selectJornadaPrognosticos.value);
       const res = await fetch("/jogos");
       const jogos = await res.json();
 
-      let html = "";
+      const jogosDaJornada = jogos.filter(j => j.jornada === jornada);
 
-      jogos.forEach((j, index) => {
-        html += `
-          <div class="progCard">
-            <h3>Jornada ${j.jornada}</h3>
-            <p><strong>${j.casa}</strong> vs <strong>${j.fora}</strong></p>
+      const cardsDiv = document.getElementById("cardsJogos");
+      cardsDiv.innerHTML = "";
 
-            <div class="progInputs">
-              <div>
-                <label>${j.casa}</label>
-                <input id="progCasa_${index}" type="number" min="0">
-              </div>
+      jogosDaJornada.forEach((jogo, jogoIndex) => {
+        let resultadoReal = "Sem resultado";
 
-              <div>
-                <label>${j.fora}</label>
-                <input id="progFora_${index}" type="number" min="0">
-              </div>
-            </div>
+        if (jogo.golosCasa !== undefined && jogo.golosFora !== undefined) {
+          resultadoReal = `${jogo.golosCasa} - ${jogo.golosFora}`;
+        }
 
-            <button class="action" onclick="guardarPrognostico(${index})">
-              Guardar Prognóstico
-            </button>
+        let tabela = `
+          <table class="tabelaPrognosticos">
+            <tr><th>Jogador</th><th>Prognóstico</th></tr>
+        `;
+
+        jogadoresFixos.forEach(jogador => {
+          tabela += `
+            <tr>
+              <td>${jogador}</td>
+              <td>
+                <input type="number" min="0" id="progCasa_${jogoIndex}_${jogador}" 
+                  oninput="guardarPrognostico('${jogador}', ${jogoIndex})">
+                -
+                <input type="number" min="0" id="progFora_${jogoIndex}_${jogador}" 
+                  oninput="guardarPrognostico('${jogador}', ${jogoIndex})">
+              </td>
+            </tr>
+          `;
+        });
+
+        tabela += "</table>";
+
+        const card = `
+          <div class="cardJogo">
+            <h3>${jogo.casa} vs ${jogo.fora}</h3>
+            <div class="resultadoReal">Resultado Real: ${resultadoReal}</div>
+            ${tabela}
           </div>
         `;
-      });
 
-      div.innerHTML = html;
+        cardsDiv.innerHTML += card;
+      });
     }
 
-    async function guardarPrognostico(index) {
-      const jogador = window.jogadorAtual;
+    async function guardarPrognostico(jogador, jogoIndex) {
+      const jornada = Number(selectJornadaPrognosticos.value);
 
       const resJogos = await fetch("/jogos");
       const jogos = await resJogos.json();
-      const jogo = jogos[index];
+      const jogosDaJornada = jogos.filter(j => j.jornada === jornada);
+      const jogo = jogosDaJornada[jogoIndex];
 
-      const progCasa = Number(document.getElementById(`progCasa_${index}`).value);
-      const progFora = Number(document.getElementById(`progFora_${index}`).value);
+      const progCasa = Number(document.getElementById(`progCasa_${jogoIndex}_${jogador}`).value);
+      const progFora = Number(document.getElementById(`progFora_${jogoIndex}_${jogador}`).value);
+
+      if (isNaN(progCasa) || isNaN(progFora)) return;
 
       const body = {
         jogador,
-        jornada: jogo.jornada,
+        jornada,
         casa: jogo.casa,
         fora: jogo.fora,
         progCasa,
@@ -613,11 +263,9 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
-
-      alert("Prognóstico guardado!");
     }
 
-    mostrarSecao('criarJogo');
+    mostrarSecao('prognosticos');
 
   </script>
 
