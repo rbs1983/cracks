@@ -1,1 +1,20 @@
-
+[
+  {
+    "jogo": "Benfica vs Porto",
+    "user": "Renato",
+    "palpite": "2-1",
+    "pontos": 3
+  },
+  {
+    "jogo": "Sporting vs Braga",
+    "user": "João",
+    "palpite": "1-1",
+    "pontos": 1
+  },
+  {
+    "jogo": "Porto vs Boavista",
+    "user": "Maria",
+    "palpite": "3-0",
+    "pontos": 5
+  }
+]
