@@ -42,21 +42,19 @@ app.get("/palpites", (req, res) => {
 // ROTAS POST
 // -----------------------------
 
-// Adicionar jogo
+// Criar jogo (sem golos)
 app.post("/add-jogo", (req, res) => {
   const jogos = loadJSON("jogos.json");
 
   const novoJogo = {
     casa: req.body.casa,
-    golosCasa: req.body.golosCasa,
-    golosFora: req.body.golosFora,
     fora: req.body.fora
   };
 
   jogos.push(novoJogo);
   saveJSON("jogos.json", jogos);
 
-  res.json({ message: "Jogo adicionado!", jogo: novoJogo });
+  res.json({ message: "Jogo criado!", jogo: novoJogo });
 });
 
 // Adicionar palpite
@@ -76,7 +74,7 @@ app.post("/add-palpite", (req, res) => {
   res.json({ message: "Palpite adicionado!", palpite: novoPalpite });
 });
 
-// Adicionar/atualizar classificação
+// Atualizar classificação
 app.post("/add-classificacao", (req, res) => {
   const classificacao = loadJSON("classificacao.json");
 
@@ -86,7 +84,6 @@ app.post("/add-classificacao", (req, res) => {
     pontos: req.body.pontos
   };
 
-  // Se já existir posição, substitui
   const index = classificacao.findIndex(e => e.pos === novaEquipa.pos);
 
   if (index >= 0) {
@@ -95,7 +92,6 @@ app.post("/add-classificacao", (req, res) => {
     classificacao.push(novaEquipa);
   }
 
-  // Ordenar por posição
   classificacao.sort((a, b) => a.pos - b.pos);
 
   saveJSON("classificacao.json", classificacao);
