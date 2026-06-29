@@ -1,123 +1,99 @@
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-  <meta charset="UTF-8">
-  <title>Liga Portuguesa - Dashboard</title>
+<script>
+  const links = document.querySelectorAll(".menu-link");
+  const content = document.getElementById("content");
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      height: 100vh;
-      background: #0f172a;
-      color: #e5e7eb;
-    }
+  // Endpoints da tua API no Railway
+  const API = {
+    classificacao: "/classificacao",
+    jogos: "/jogos",
+    palpites: "/palpites"
+  };
 
-    .sidebar {
-      width: 240px;
-      background: #020617;
-      padding: 20px;
-      box-sizing: border-box;
-      border-right: 1px solid #1f2937;
-    }
+  // Renderização genérica
+  function renderSection(title, html) {
+    content.innerHTML = `<h1>${title}</h1>${html}`;
+  }
 
-    .sidebar-title {
-      font-size: 1.3rem;
-      font-weight: bold;
-      margin-bottom: 20px;
-      color: #f97316;
-    }
+  // Função para buscar dados da API
+  async function loadSection(section) {
+    const endpoint = API[section];
 
-    .menu {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
+    try {
+      const res = await fetch(endpoint);
+      const data = await res.json();
 
-    .menu-item {
-      margin-bottom: 10px;
-    }
+      switch (section) {
+        case "classificacao":
+          renderSection("Classificação", buildClassificacaoTable(data));
+          break;
 
-    .menu-link {
-      display: block;
-      padding: 10px;
-      border-radius: 6px;
-      text-decoration: none;
-      color: #e5e7eb;
-      background: transparent;
-      cursor: pointer;
-    }
+        case "jogos":
+          renderSection("Jogos", buildJogosList(data));
+          break;
 
-    .menu-link:hover {
-      background: #1f2937;
-    }
-
-    .menu-link.active {
-      background: #2563eb;
-      color: white;
-    }
-
-    .content {
-      flex: 1;
-      padding: 24px;
-      box-sizing: border-box;
-    }
-  </style>
-</head>
-
-<body>
-
-  <aside class="sidebar">
-    <div class="sidebar-title">Liga Portuguesa</div>
-
-    <ul class="menu">
-      <li class="menu-item">
-        <a class="menu-link active" data-section="classificacao">Classificação</a>
-      </li>
-      <li class="menu-item">
-        <a class="menu-link" data-section="jogos">Jogos</a>
-      </li>
-      <li class="menu-item">
-        <a class="menu-link" data-section="palpites">Palpites</a>
-      </li>
-    </ul>
-  </aside>
-
-  <main class="content" id="content">
-    <h1>Classificação</h1>
-    <p>Aqui vais mostrar a tabela da Liga Portuguesa.</p>
-  </main>
-
-  <script>
-    const links = document.querySelectorAll(".menu-link");
-    const content = document.getElementById("content");
-
-    const sections = {
-      classificacao: {
-        title: "Classificação",
-        text: "Aqui vais mostrar a tabela da Liga Portuguesa."
-      },
-      jogos: {
-        title: "Jogos",
-        text: "Lista de jogos, resultados e próximos encontros."
-      },
-      palpites: {
-        title: "Palpites",
-        text: "Zona de palpites, previsões e estatísticas."
+        case "palpites":
+          renderSection("Palpites", buildPalpitesTable(data));
+          break;
       }
-    };
 
-    links.forEach(link => {
-      link.addEventListener("click", () => {
-        links.forEach(l => l.classList.remove("active"));
-        link.classList.add("active");
+    } catch (err) {
+      renderSection("Erro", `<p>Não foi possível carregar os dados.</p>`);
+      console.error(err);
+    }
+  }
 
-        const section = sections[link.dataset.section];
-        content.innerHTML = `<h1>${section.title}</h1><p>${section.text}</p>`;
-      });
+  // Construção das tabelas
+  function buildClassificacaoTable(data) {
+    let rows = data.map(team => `
+      <tr>
+        <td>${team.pos}</td>
+        <td>${team.nome}</td>
+        <td>${team.pontos}</td>
+      </tr>
+    `).join("");
+
+    return `
+      <table border="1" cellpadding="6">
+        <tr><th>Pos</th><th>Equipa</th><th>Pontos</th></tr>
+        ${rows}
+      </table>
+    `;
+  }
+
+  function buildJogosList(data) {
+    return data.map(j => `
+      <p>${j.casa} ${j.golosCasa} - ${j.golosFora} ${j.fora}</p>
+    `).join("");
+  }
+
+  function buildPalpitesTable(data) {
+    let rows = data.map(p => `
+      <tr>
+        <td>${p.jogo}</td>
+        <td>${p.user}</td>
+        <td>${p.palpite}</td>
+        <td>${p.pontos}</td>
+      </tr>
+    `).join("");
+
+    return `
+      <table border="1" cellpadding="6">
+        <tr><th>Jogo</th><th>Jogador</th><th>Palpite</th><th>Pontos</th></tr>
+        ${rows}
+      </table>
+    `;
+  }
+
+  // Eventos do menu
+  links.forEach(link => {
+    link.addEventListener("click", () => {
+      links.forEach(l => l.classList.remove("active"));
+      link.classList.add("active");
+
+      loadSection(link.dataset.section);
     });
-  </script>
+  });
 
-</body>
-</html>
+  // Carregar a primeira secção ao abrir
+  loadSection("classificacao");
+</script>
