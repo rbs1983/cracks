@@ -117,7 +117,7 @@
     }
 
     /* ============================
-       LAYOUT RESULTADOS
+       RESULTADOS
     ============================= */
 
     .resultCard {
@@ -262,7 +262,7 @@
 
       <div style="display: flex; gap: 20px;">
 
-        <div style="width: 200px;">
+        <div style="width: 220px;">
           <h3>Jogadores</h3>
           <div id="listaJogadores"></div>
         </div>
@@ -278,6 +278,11 @@
   </div>
 
   <script>
+
+    /* ============================
+         NAVEGAÇÃO ENTRE SECÇÕES
+    ============================= */
+
     function mostrarSecao(id) {
       document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
       document.getElementById(id).style.display = 'block';
@@ -286,6 +291,10 @@
       if (id === "verJogos") carregarResultados();
       if (id === "prognosticos") carregarJogadores();
     }
+
+    /* ============================
+         CRIAR JOGO
+    ============================= */
 
     const jornadaSelect = document.getElementById("jornada");
 
@@ -521,17 +530,20 @@
          PROGNÓSTICOS
     ============================= */
 
-    async function carregarJogadores() {
+    const jogadoresFixos = [
+      "André David",
+      "António Silva",
+      "Bruno Marques"
+    ];
+
+    function carregarJogadores() {
       const div = document.getElementById("listaJogadores");
 
-      const res = await fetch("/players");
-      const players = await res.json();
-
       let html = "";
-      players.forEach(p => {
+      jogadoresFixos.forEach(nome => {
         html += `
-          <div class="jogadorBtn" onclick="selecionarJogador('${p.nome}')">
-            ${p.nome}
+          <div class="jogadorBtn" onclick="selecionarJogador('${nome}')">
+            ${nome}
           </div>
         `;
       });
@@ -606,6 +618,7 @@
     }
 
     mostrarSecao('criarJogo');
+
   </script>
 
 </body>
