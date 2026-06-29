@@ -220,9 +220,7 @@
 
   <div class="content">
 
-    <!-- ============================
-         CRIAR JOGO
-    ============================= -->
+    <!-- CRIAR JOGO -->
     <div id="criarJogo" class="section">
       <h2>Criar Jogo</h2>
 
@@ -242,9 +240,7 @@
       <div id="listaCriarJogos"></div>
     </div>
 
-    <!-- ============================
-         RESULTADOS DOS JOGOS
-    ============================= -->
+    <!-- RESULTADOS DOS JOGOS -->
     <div id="verJogos" class="section">
       <h2>Resultados dos Jogos</h2>
 
@@ -255,9 +251,7 @@
       <div id="listaResultadosGuardados"></div>
     </div>
 
-    <!-- ============================
-         PROGNÓSTICOS
-    ============================= -->
+    <!-- PROGNÓSTICOS -->
     <div id="prognosticos" class="section">
       <h2>Prognósticos</h2>
 
@@ -283,7 +277,6 @@
   </div>
 
   <script>
-
     function mostrarSecao(id) {
       document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
       document.getElementById(id).style.display = 'block';
@@ -293,9 +286,7 @@
       if (id === "prognosticos") carregarPrognosticosJornada();
     }
 
-    /* ============================
-         CRIAR JOGO
-    ============================= */
+    /* CRIAR JOGO */
 
     const jornadaSelect = document.getElementById("jornada");
     for (let i = 1; i <= 34; i++) {
@@ -364,9 +355,7 @@
       }
     }
 
-    /* ============================
-         RESULTADOS DOS JOGOS
-    ============================= */
+    /* RESULTADOS DOS JOGOS */
 
     async function carregarResultados() {
       const inserirDiv = document.getElementById("listaResultadosInserir");
@@ -526,9 +515,7 @@
       }
     }
 
-    /* ============================
-         PROGNÓSTICOS
-    ============================= */
+    /* PROGNÓSTICOS */
 
     const jogadoresFixos = [
       "André David",
@@ -590,3 +577,48 @@
         tabela += "</table>";
 
         const card = `
+          <div class="cardJogo">
+            <h3>${jogo.casa} vs ${jogo.fora}</h3>
+            <div class="resultadoReal">Resultado Real: ${resultadoReal}</div>
+            ${tabela}
+          </div>
+        `;
+
+        cardsDiv.innerHTML += card;
+      });
+    }
+
+    async function guardarPrognostico(jogador, jogoIndex) {
+      const jornada = Number(selectJornadaPrognosticos.value);
+
+      const resJogos = await fetch("/jogos");
+      const jogos = await resJogos.json();
+      const jogosDaJornada = jogos.filter(j => j.jornada === jornada);
+      const jogo = jogosDaJornada[jogoIndex];
+
+      const progCasa = Number(document.getElementById(`progCasa_${jogoIndex}_${jogador}`).value);
+      const progFora = Number(document.getElementById(`progFora_${jogoIndex}_${jogador}`).value);
+
+      if (isNaN(progCasa) || isNaN(progFora)) return;
+
+      const body = {
+        jogador,
+        jornada,
+        casa: jogo.casa,
+        fora: jogo.fora,
+        progCasa,
+        progFora
+      };
+
+      await fetch("/add-prognostico", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+    }
+
+    mostrarSecao('criarJogo');
+  </script>
+
+</body>
+</html>
