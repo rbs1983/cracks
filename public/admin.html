@@ -73,7 +73,7 @@
   <h1>Painel de Administração</h1>
 
   <!-- ============================
-       CRIAR JOGO (CORRIGIDO)
+       CRIAR JOGO
   ============================= -->
   <div class="section">
     <h2>Criar Jogo</h2>
@@ -91,15 +91,43 @@
     <div id="msgJogo" class="msg"></div>
   </div>
 
+  <!-- ============================
+       VER JOGOS POR JORNADA
+  ============================= -->
+  <div class="section">
+    <h2>Ver Jogos por Jornada</h2>
+
+    <label>Selecionar Jornada</label>
+    <select id="verJornada"></select>
+
+    <button onclick="carregarJogos()">Mostrar Jogos</button>
+
+    <div id="listaJogos" style="margin-top: 15px;"></div>
+  </div>
+
   <script>
-    // Gerar jornadas 1 a 34
+    // ============================
+    // GERAR DROPDOWN DE JORNADAS
+    // ============================
+
     const jornadaSelect = document.getElementById("jornada");
+    const verJornadaSelect = document.getElementById("verJornada");
+
     for (let i = 1; i <= 34; i++) {
-      const opt = document.createElement("option");
-      opt.value = i;
-      opt.textContent = "Jornada " + i;
-      jornadaSelect.appendChild(opt);
+      const opt1 = document.createElement("option");
+      opt1.value = i;
+      opt1.textContent = "Jornada " + i;
+      jornadaSelect.appendChild(opt1);
+
+      const opt2 = document.createElement("option");
+      opt2.value = i;
+      opt2.textContent = "Jornada " + i;
+      verJornadaSelect.appendChild(opt2);
     }
+
+    // ============================
+    // MENSAGENS
+    // ============================
 
     function showMsg(id, texto) {
       const div = document.getElementById(id);
@@ -107,6 +135,10 @@
       div.style.display = "block";
       setTimeout(() => div.style.display = "none", 3000);
     }
+
+    // ============================
+    // CRIAR JOGO
+    // ============================
 
     async function addJogo() {
       const body = {
@@ -124,20 +156,34 @@
       const data = await res.json();
       showMsg("msgJogo", "Jogo criado com sucesso!");
     }
+
+    // ============================
+    // VER JOGOS POR JORNADA
+    // ============================
+
+    async function carregarJogos() {
+      const jornadaEscolhida = Number(document.getElementById("verJornada").value);
+      const listaDiv = document.getElementById("listaJogos");
+
+      const res = await fetch("/jogos");
+      const jogos = await res.json();
+
+      const filtrados = jogos.filter(j => j.jornada === jornadaEscolhida);
+
+      if (filtrados.length === 0) {
+        listaDiv.innerHTML = "<p>Nenhum jogo encontrado para esta jornada.</p>";
+        return;
+      }
+
+      let html = "<ul>";
+      filtrados.forEach(j => {
+        html += `<li>${j.casa} vs ${j.fora}</li>`;
+      });
+      html += "</ul>";
+
+      listaDiv.innerHTML = html;
+    }
   </script>
 
 </body>
 </html>
-<!-- ============================
-     VER JOGOS POR JORNADA
-============================= -->
-<div class="section">
-  <h2>Ver Jogos por Jornada</h2>
-
-  <label>Selecionar Jornada</label>
-  <select id="verJornada"></select>
-
-  <button onclick="carregarJogos()">Mostrar Jogos</button>
-
-  <div id="listaJogos" style="margin-top: 15px;"></div>
-</div>
