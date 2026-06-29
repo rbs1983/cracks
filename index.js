@@ -1,53 +1,79 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const { Pool } = require("pg");
 
 const app = express();
-
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Servir ficheiros estáticos
+// Servir a pasta public (dashboard + index)
 app.use(express.static(path.join(__dirname, "public")));
 
-// Healthcheck (Railway usa isto para confirmar que o servidor está vivo)
-app.get("/health", (req, res) => {
-  res.status(200).send("OK");
+// Ligação ao PostgreSQL do Railway
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
-// Rotas da API
-app.get("/", (req, res) => {
-  res.send("API da Liga Portuguesa está online!");
-});
+// -----------------------------
+// ROTAS DA API PARA O DASHBOARD
+// -----------------------------
 
-app.get("/classificacao", (req, res) => {
-  res.json({ secao: "Classificação" });
-});
-
-app.get("/jogos", (req, res) => {
-  res.json({ secao: "Jogos" });
-});
-
-app.get("/palpites", (req, res) => {
-  res.json({ secao: "Palpites" });
-});
-
-// Porta obrigatória para Railway
-const PORT = process.env.PORT || 3000;
-
-// Bind explícito para 0.0.0.0 (ESSENCIAL no Railway)
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Servidor a correr na porta ${PORT}`);
-});
+// CLASSIFICAÇÃO
 app.get("/classificacao", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM classificacao_jogadores ORDER BY pontos_totais DESC, acertos_exatos DESC;"
-    );
+    const result = await pool.query(`
+      SELECT pos, nome, pontos
+      FROM classificacao
+      ORDER BY pos ASC
+    `);
+
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ erro: 'Erro ao obter classificação' });
+    res.status(500).json({ error: "Erro ao carregar classificação" });
   }
+});
+
+// JOGOS
+app.get("/jogos", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT casa, golos_casa AS "golosCasa",
+             golos_fora AS "golosFora", fora
+      FROM jogos
+      ORDER BY id ASC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao carregar jogos" });
+  }
+});
+
+// PALPITES
+app.get("/palpites", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT jogo, username AS "user",
+             palpite, pontos
+      FROM palpites
+      ORDER BY id ASC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao carregar palpites" });
+  }
+});
+
+// -----------------------------
+// PORTA
+// -----------------------------
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("API ativa na porta " + PORT);
 });
