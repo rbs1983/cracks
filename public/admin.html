@@ -74,21 +74,15 @@
 
   <!-- ADICIONAR JOGO -->
   <div class="section">
-    <h2>Adicionar Jogo</h2>
+    <h2>Criar Jogo</h2>
 
     <label>Equipa da Casa</label>
     <input id="casa" type="text">
 
-    <label>Golos da Casa</label>
-    <input id="golosCasa" type="number">
-
-    <label>Golos de Fora</label>
-    <input id="golosFora" type="number">
-
     <label>Equipa de Fora</label>
     <input id="fora" type="text">
 
-    <button onclick="addJogo()">Adicionar Jogo</button>
+    <button onclick="addJogo()">Criar Jogo</button>
     <div id="msgJogo" class="msg"></div>
   </div>
 
@@ -130,12 +124,6 @@
   </div>
 
   <script>
-    const API = {
-      addJogo: "/add-jogo",
-      addPalpite: "/add-palpite",
-      addClassificacao: "/add-classificacao"
-    };
-
     function showMsg(id, texto) {
       const div = document.getElementById(id);
       div.innerText = texto;
@@ -146,19 +134,17 @@
     async function addJogo() {
       const body = {
         casa: document.getElementById("casa").value,
-        golosCasa: Number(document.getElementById("golosCasa").value),
-        golosFora: Number(document.getElementById("golosFora").value),
         fora: document.getElementById("fora").value
       };
 
-      const res = await fetch(API.addJogo, {
+      const res = await fetch("/add-jogo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
 
       const data = await res.json();
-      showMsg("msgJogo", "Jogo adicionado com sucesso!");
+      showMsg("msgJogo", "Jogo criado com sucesso!");
     }
 
     async function addPalpite() {
@@ -169,7 +155,7 @@
         pontos: Number(document.getElementById("pontos").value)
       };
 
-      const res = await fetch(API.addPalpite, {
+      const res = await fetch("/add-palpite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
@@ -186,7 +172,7 @@
         pontos: Number(document.getElementById("pontosClass").value)
       };
 
-      const res = await fetch(API.addClassificacao, {
+      const res = await fetch("/add-classificacao", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
