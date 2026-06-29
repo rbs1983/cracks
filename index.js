@@ -1,73 +1,106 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const { Pool } = require("pg");
+const fs = require("fs");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Servir a pasta public (dashboard + index)
+// Servir a pasta public
 app.use(express.static(path.join(__dirname, "public")));
 
-// Ligação ao PostgreSQL do Railway
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+// Função para carregar JSON
+function loadJSON(file) {
+  const filePath = path.join(__dirname, "data", file);
+  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+// Função para guardar JSON
+function saveJSON(file, data) {
+  const filePath = path.join(__dirname, "data", file);
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
+
+// -----------------------------
+// ROTAS GET
+// -----------------------------
+
+app.get("/classificacao", (req, res) => {
+  res.json(loadJSON("classificacao.json"));
+});
+
+app.get("/jogos", (req, res) => {
+  res.json(loadJSON("jogos.json"));
+});
+
+app.get("/palpites", (req, res) => {
+  res.json(loadJSON("palpites.json"));
 });
 
 // -----------------------------
-// ROTAS DA API PARA O DASHBOARD
+// ROTAS POST
 // -----------------------------
 
-// CLASSIFICAÇÃO
-app.get("/classificacao", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT pos, nome, pontos
-      FROM classificacao
-      ORDER BY pos ASC
-    `);
+// Adicionar jogo
+app.post("/add-jogo", (req, res) => {
+  const jogos = loadJSON("jogos.json");
 
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao carregar classificação" });
-  }
+  const novoJogo = {
+    casa: req.body.casa,
+    golosCasa: req.body.golosCasa,
+    golosFora: req.body.golosFora,
+    fora: req.body.fora
+  };
+
+  jogos.push(novoJogo);
+  saveJSON("jogos.json", jogos);
+
+  res.json({ message: "Jogo adicionado!", jogo: novoJogo });
 });
 
-// JOGOS
-app.get("/jogos", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT casa, golos_casa AS "golosCasa",
-             golos_fora AS "golosFora", fora
-      FROM jogos
-      ORDER BY id ASC
-    `);
+// Adicionar palpite
+app.post("/add-palpite", (req, res) => {
+  const palpites = loadJSON("palpites.json");
 
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao carregar jogos" });
-  }
+  const novoPalpite = {
+    jogo: req.body.jogo,
+    user: req.body.user,
+    palpite: req.body.palpite,
+    pontos: req.body.pontos
+  };
+
+  palpites.push(novoPalpite);
+  saveJSON("palpites.json", palpites);
+
+  res.json({ message: "Palpite adicionado!", palpite: novoPalpite });
 });
 
-// PALPITES
-app.get("/palpites", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT jogo, username AS "user",
-             palpite, pontos
-      FROM palpites
-      ORDER BY id ASC
-    `);
+// Adicionar/atualizar classificação
+app.post("/add-classificacao", (req, res) => {
+  const classificacao = loadJSON("classificacao.json");
 
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao carregar palpites" });
+  const novaEquipa = {
+    pos: req.body.pos,
+    nome: req.body.nome,
+    pontos: req.body.pontos
+  };
+
+  // Se já existir posição, substitui
+  const index = classificacao.findIndex(e => e.pos === novaEquipa.pos);
+
+  if (index >= 0) {
+    classificacao[index] = novaEquipa;
+  } else {
+    classificacao.push(novaEquipa);
   }
+
+  // Ordenar por posição
+  classificacao.sort((a, b) => a.pos - b.pos);
+
+  saveJSON("classificacao.json", classificacao);
+
+  res.json({ message: "Classificação atualizada!", equipa: novaEquipa });
 });
 
 // -----------------------------
