@@ -232,29 +232,33 @@
       const res = await fetch("/jogos");
       const jogos = await res.json();
 
-      const ordenados = jogos.slice().reverse();
-
       let html = "<ul>";
-      ordenados.forEach((j, index) => {
+      for (let i = jogos.length - 1; i >= 0; i--) {
+        const j = jogos[i];
         html += `
           <li>
             Jornada ${j.jornada}: ${j.casa} vs ${j.fora}
-            <span class="deleteBtn" onclick="apagarJogo(${jogos.length - 1 - index})">Apagar</span>
+            <span class="deleteBtn" onclick="apagarJogo(${i})">Apagar</span>
           </li>`;
-      });
+      }
       html += "</ul>";
 
       listaDiv.innerHTML = html;
     }
 
     async function apagarJogo(index) {
-      await fetch("/delete-jogo", {
+      const res = await fetch("/delete-jogo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ index })
       });
 
-      carregarJogosCriados();
+      const data = await res.json();
+      if (data.success) {
+        carregarJogosCriados();
+      } else {
+        alert("Erro ao apagar jogo: " + (data.message || ""));
+      }
     }
 
     mostrarSecao('criarJogo');
