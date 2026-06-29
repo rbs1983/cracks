@@ -117,7 +117,7 @@
     }
 
     /* ============================
-       NOVO LAYOUT SIMPLES
+       LAYOUT RESULTADOS
     ============================= */
 
     .resultCard {
@@ -163,6 +163,48 @@
     .resultButtons {
       margin-top: 10px;
     }
+
+    /* ============================
+       PROGNÓSTICOS
+    ============================= */
+
+    .jogadorBtn {
+      background: #334155;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: 0.2s;
+    }
+
+    .jogadorBtn:hover {
+      background: #475569;
+    }
+
+    .progCard {
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      margin-bottom: 20px;
+    }
+
+    .progInputs {
+      display: flex;
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    .progInputs input {
+      width: 80px;
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      background: #475569;
+      color: white;
+      text-align: center;
+    }
   </style>
 </head>
 
@@ -172,6 +214,7 @@
     <h2>Admin</h2>
     <button onclick="mostrarSecao('criarJogo')">Criar Jogos</button>
     <button onclick="mostrarSecao('verJogos')">Resultados dos Jogos</button>
+    <button onclick="mostrarSecao('prognosticos')">Prognósticos</button>
   </div>
 
   <div class="content">
@@ -204,13 +247,32 @@
     <div id="verJogos" class="section">
       <h2>Resultados dos Jogos</h2>
 
-      <p>Insere ou edita os resultados dos jogos. Os jogos mais recentes aparecem primeiro.</p>
-
       <h3>Inserir Resultado</h3>
       <div id="listaResultadosInserir"></div>
 
       <h3>Jogos Realizados</h3>
       <div id="listaResultadosGuardados"></div>
+    </div>
+
+    <!-- ============================
+         PROGNÓSTICOS
+    ============================= -->
+    <div id="prognosticos" class="section">
+      <h2>Prognósticos</h2>
+
+      <div style="display: flex; gap: 20px;">
+
+        <div style="width: 200px;">
+          <h3>Jogadores</h3>
+          <div id="listaJogadores"></div>
+        </div>
+
+        <div style="flex: 1;">
+          <h3>Prognósticos do Jogador</h3>
+          <div id="listaPrognosticos"></div>
+        </div>
+
+      </div>
     </div>
 
   </div>
@@ -222,6 +284,7 @@
 
       if (id === "criarJogo") carregarJogosCriados();
       if (id === "verJogos") carregarResultados();
+      if (id === "prognosticos") carregarJogadores();
     }
 
     const jornadaSelect = document.getElementById("jornada");
@@ -394,31 +457,35 @@
 
       const guardadosDiv = document.getElementById("listaResultadosGuardados");
 
-      guardadosDiv.innerHTML = `
-        <div class="resultCard">
-          <div class="resultHeader">Editar Resultado — Jornada ${jogo.jornada}</div>
+      const editarDiv = document.createElement("div");
+      editarDiv.className = "resultCard";
+      editarDiv.style.border = "2px solid #2563eb";
 
-          <div class="resultTeams">
-            <strong>${jogo.casa}</strong> vs <strong>${jogo.fora}</strong>
+      editarDiv.innerHTML = `
+        <div class="resultHeader">Editar Resultado — Jornada ${jogo.jornada}</div>
+
+        <div class="resultTeams">
+          <strong>${jogo.casa}</strong> vs <strong>${jogo.fora}</strong>
+        </div>
+
+        <div class="resultInputs">
+          <div>
+            <label>Golos ${jogo.casa}</label>
+            <input id="editCasa" type="number" min="0" value="${jogo.golosCasa}">
           </div>
 
-          <div class="resultInputs">
-            <div>
-              <label>Golos ${jogo.casa}</label>
-              <input id="editCasa" type="number" min="0" value="${jogo.golosCasa}">
-            </div>
-
-            <div>
-              <label>Golos ${jogo.fora}</label>
-              <input id="editFora" type="number" min="0" value="${jogo.golosFora}">
-            </div>
-          </div>
-
-          <div class="resultButtons">
-            <button class="action" onclick="guardarEdicao(${index})">Guardar Alteração</button>
+          <div>
+            <label>Golos ${jogo.fora}</label>
+            <input id="editFora" type="number" min="0" value="${jogo.golosFora}">
           </div>
         </div>
+
+        <div class="resultButtons">
+          <button class="action" onclick="guardarEdicao(${index})">Guardar Alteração</button>
+        </div>
       `;
+
+      guardadosDiv.prepend(editarDiv);
     }
 
     async function guardarEdicao(index) {
@@ -448,6 +515,94 @@
       } else {
         alert("Erro ao editar resultado.");
       }
+    }
+
+    /* ============================
+         PROGNÓSTICOS
+    ============================= */
+
+    async function carregarJogadores() {
+      const div = document.getElementById("listaJogadores");
+
+      const res = await fetch("/players");
+      const players = await res.json();
+
+      let html = "";
+      players.forEach(p => {
+        html += `
+          <div class="jogadorBtn" onclick="selecionarJogador('${p.nome}')">
+            ${p.nome}
+          </div>
+        `;
+      });
+
+      div.innerHTML = html;
+    }
+
+    async function selecionarJogador(nomeJogador) {
+      window.jogadorAtual = nomeJogador;
+
+      const div = document.getElementById("listaPrognosticos");
+
+      const res = await fetch("/jogos");
+      const jogos = await res.json();
+
+      let html = "";
+
+      jogos.forEach((j, index) => {
+        html += `
+          <div class="progCard">
+            <h3>Jornada ${j.jornada}</h3>
+            <p><strong>${j.casa}</strong> vs <strong>${j.fora}</strong></p>
+
+            <div class="progInputs">
+              <div>
+                <label>${j.casa}</label>
+                <input id="progCasa_${index}" type="number" min="0">
+              </div>
+
+              <div>
+                <label>${j.fora}</label>
+                <input id="progFora_${index}" type="number" min="0">
+              </div>
+            </div>
+
+            <button class="action" onclick="guardarPrognostico(${index})">
+              Guardar Prognóstico
+            </button>
+          </div>
+        `;
+      });
+
+      div.innerHTML = html;
+    }
+
+    async function guardarPrognostico(index) {
+      const jogador = window.jogadorAtual;
+
+      const resJogos = await fetch("/jogos");
+      const jogos = await resJogos.json();
+      const jogo = jogos[index];
+
+      const progCasa = Number(document.getElementById(`progCasa_${index}`).value);
+      const progFora = Number(document.getElementById(`progFora_${index}`).value);
+
+      const body = {
+        jogador,
+        jornada: jogo.jornada,
+        casa: jogo.casa,
+        fora: jogo.fora,
+        progCasa,
+        progFora
+      };
+
+      await fetch("/add-prognostico", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      alert("Prognóstico guardado!");
     }
 
     mostrarSecao('criarJogo');
