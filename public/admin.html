@@ -91,7 +91,6 @@
       background: #1d4ed8;
     }
 
-    /* Botão pill suave */
     .deleteBtn {
       background: #f87171;
       color: #1e293b;
@@ -157,9 +156,13 @@
     <div id="verJogos" class="section">
       <h2>Resultados dos Jogos</h2>
 
-      <p>Insere os resultados corretos dos jogos. Os jogos mais recentes aparecem primeiro.</p>
+      <p>Insere ou edita os resultados dos jogos. Os jogos mais recentes aparecem primeiro.</p>
 
-      <div id="listaResultados"></div>
+      <h3>Inserir Resultado</h3>
+      <div id="listaResultadosInserir"></div>
+
+      <h3>Resultados Guardados</h3>
+      <div id="listaResultadosGuardados"></div>
     </div>
 
   </div>
@@ -246,33 +249,49 @@
     ============================= */
 
     async function carregarResultados() {
-      const listaDiv = document.getElementById("listaResultados");
+      const inserirDiv = document.getElementById("listaResultadosInserir");
+      const guardadosDiv = document.getElementById("listaResultadosGuardados");
 
       const res = await fetch("/jogos");
       const jogos = await res.json();
 
       const ordenados = jogos.slice().sort((a, b) => b.jornada - a.jornada);
 
-      let html = "";
+      let htmlInserir = "";
+      let htmlGuardados = "";
 
       ordenados.forEach((j, index) => {
-        html += `
-          <div style="margin-bottom: 15px; padding: 15px; background: #334155; border-radius: 8px;">
-            <h3>Jornada ${j.jornada}</h3>
-            <p><strong>${j.casa}</strong> vs <strong>${j.fora}</strong></p>
+        const temResultado = j.golosCasa !== undefined && j.golosFora !== undefined;
 
-            <label>Golos ${j.casa}</label>
-            <input id="golosCasa_${index}" type="number" min="0" style="width: 80px;">
+        if (!temResultado) {
+          htmlInserir += `
+            <div style="margin-bottom: 15px; padding: 15px; background: #334155; border-radius: 8px;">
+              <h3>Jornada ${j.jornada}</h3>
+              <p><strong>${j.casa}</strong> vs <strong>${j.fora}</strong></p>
 
-            <label>Golos ${j.fora}</label>
-            <input id="golosFora_${index}" type="number" min="0" style="width: 80px;">
+              <label>Golos ${j.casa}</label>
+              <input id="golosCasa_${index}" type="number" min="0" style="width: 80px;">
 
-            <button class="action" onclick="guardarResultado(${index})">Guardar Resultado</button>
-          </div>
-        `;
+              <label>Golos ${j.fora}</label>
+              <input id="golosFora_${index}" type="number" min="0" style="width: 80px;">
+
+              <button class="action" onclick="guardarResultado(${index})">Guardar Resultado</button>
+            </div>
+          `;
+        } else {
+          htmlGuardados += `
+            <div style="margin-bottom: 15px; padding: 15px; background: #1e293b; border-radius: 8px;">
+              <h3>Jornada ${j.jornada}</h3>
+              <p><strong>${j.casa}</strong> ${j.golosCasa} - ${j.golosFora} <strong>${j.fora}</strong></p>
+
+              <button class="action" onclick="editarResultado(${index})">Editar</button>
+            </div>
+          `;
+        }
       });
 
-      listaDiv.innerHTML = html;
+      inserirDiv.innerHTML = htmlInserir;
+      guardadosDiv.innerHTML = htmlGuardados;
 
       window.jogosOrdenados = ordenados;
     }
@@ -300,9 +319,59 @@
       const data = await res.json();
 
       if (data.success) {
-        alert("Resultado guardado com sucesso!");
+        carregarResultados();
       } else {
         alert("Erro ao guardar resultado.");
+      }
+    }
+
+    function editarResultado(index) {
+      const jogo = window.jogosOrdenados[index];
+
+      const guardadosDiv = document.getElementById("listaResultadosGuardados");
+
+      guardadosDiv.innerHTML = `
+        <div style="margin-bottom: 15px; padding: 15px; background: #334155; border-radius: 8px;">
+          <h3>Editar Resultado — Jornada ${jogo.jornada}</h3>
+          <p><strong>${jogo.casa}</strong> vs <strong>${jogo.fora}</strong></p>
+
+          <label>Golos ${jogo.casa}</label>
+          <input id="editCasa" type="number" min="0" value="${jogo.golosCasa}" style="width: 80px;">
+
+          <label>Golos ${jogo.fora}</label>
+          <input id="editFora" type="number" min="0" value="${jogo.golosFora}" style="width: 80px;">
+
+          <button class="action" onclick="guardarEdicao(${index})">Guardar Alteração</button>
+        </div>
+      `;
+    }
+
+    async function guardarEdicao(index) {
+      const jogo = window.jogosOrdenados[index];
+
+      const golosCasa = Number(document.getElementById("editCasa").value);
+      const golosFora = Number(document.getElementById("editFora").value);
+
+      const body = {
+        jornada: jogo.jornada,
+        casa: jogo.casa,
+        fora: jogo.fora,
+        golosCasa,
+        golosFora
+      };
+
+      const res = await fetch("/update-resultado", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        carregarResultados();
+      } else {
+        alert("Erro ao editar resultado.");
       }
     }
 
