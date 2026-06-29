@@ -133,6 +133,9 @@
 
       <button class="action" onclick="addJogo()">Criar Jogo</button>
       <div id="msgJogo" class="msg"></div>
+
+      <h3>Jogos Criados</h3>
+      <div id="listaCriarJogos"></div>
     </div>
 
     <!-- ============================
@@ -156,6 +159,8 @@
     function mostrarSecao(id) {
       document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
       document.getElementById(id).style.display = 'block';
+
+      if (id === "criarJogo") carregarJogosCriados();
     }
 
     // Preencher dropdowns de jornada
@@ -198,6 +203,8 @@
 
       const data = await res.json();
       showMsg("msgJogo", "Jogo criado com sucesso!");
+
+      carregarJogosCriados(); // atualizar lista imediatamente
     }
 
     // Ver jogos por jornada
@@ -224,7 +231,25 @@
       listaDiv.innerHTML = html;
     }
 
-    // Mostrar a primeira secção ao carregar
+    // Carregar jogos criados (último primeiro)
+    async function carregarJogosCriados() {
+      const listaDiv = document.getElementById("listaCriarJogos");
+
+      const res = await fetch("/jogos");
+      const jogos = await res.json();
+
+      const ordenados = jogos.slice().reverse();
+
+      let html = "<ul>";
+      ordenados.forEach(j => {
+        html += `<li>Jornada ${j.jornada}: ${j.casa} vs ${j.fora}</li>`;
+      });
+      html += "</ul>";
+
+      listaDiv.innerHTML = html;
+    }
+
+    // Mostrar secção inicial
     mostrarSecao('criarJogo');
   </script>
 
