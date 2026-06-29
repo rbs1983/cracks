@@ -42,11 +42,12 @@ app.get("/palpites", (req, res) => {
 // ROTAS POST
 // -----------------------------
 
-// Criar jogo (sem golos)
+// Criar jogo (com jornada)
 app.post("/add-jogo", (req, res) => {
   const jogos = loadJSON("jogos.json");
 
   const novoJogo = {
+    jornada: req.body.jornada,
     casa: req.body.casa,
     fora: req.body.fora
   };
