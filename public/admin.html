@@ -10,12 +10,47 @@
       font-family: Arial, sans-serif;
       background: #0f172a;
       color: #e5e7eb;
-      padding: 20px;
+      display: flex;
     }
 
-    h1 {
+    /* MENU LATERAL */
+    .sidebar {
+      width: 220px;
+      background: #1e293b;
+      height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+      border-right: 2px solid #334155;
+      position: fixed;
+    }
+
+    .sidebar h2 {
       color: #f97316;
+      margin-bottom: 20px;
+    }
+
+    .sidebar button {
+      width: 100%;
+      padding: 12px;
       margin-bottom: 10px;
+      background: #2563eb;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+      text-align: left;
+    }
+
+    .sidebar button:hover {
+      background: #1d4ed8;
+    }
+
+    /* CONTEÚDO PRINCIPAL */
+    .content {
+      margin-left: 240px;
+      padding: 20px;
+      width: 100%;
     }
 
     .section {
@@ -24,6 +59,7 @@
       border-radius: 8px;
       margin-bottom: 25px;
       border: 1px solid #334155;
+      display: none; /* escondido por padrão */
     }
 
     label {
@@ -42,7 +78,7 @@
       color: white;
     }
 
-    button {
+    button.action {
       margin-top: 15px;
       padding: 10px 15px;
       background: #2563eb;
@@ -53,7 +89,7 @@
       font-size: 1rem;
     }
 
-    button:hover {
+    button.action:hover {
       background: #1d4ed8;
     }
 
@@ -70,46 +106,59 @@
 
 <body>
 
-  <h1>Painel de Administração</h1>
-
-  <!-- ============================
-       CRIAR JOGO
-  ============================= -->
-  <div class="section">
-    <h2>Criar Jogo</h2>
-
-    <label>Jornada</label>
-    <select id="jornada"></select>
-
-    <label>Equipa da Casa</label>
-    <input id="casa" type="text">
-
-    <label>Equipa de Fora</label>
-    <input id="fora" type="text">
-
-    <button onclick="addJogo()">Criar Jogo</button>
-    <div id="msgJogo" class="msg"></div>
+  <!-- MENU LATERAL -->
+  <div class="sidebar">
+    <h2>Admin</h2>
+    <button onclick="mostrarSecao('criarJogo')">Criar Jogos</button>
+    <button onclick="mostrarSecao('verJogos')">Ver Jogos por Jornada</button>
   </div>
 
-  <!-- ============================
-       VER JOGOS POR JORNADA
-  ============================= -->
-  <div class="section">
-    <h2>Ver Jogos por Jornada</h2>
+  <!-- CONTEÚDO -->
+  <div class="content">
 
-    <label>Selecionar Jornada</label>
-    <select id="verJornada"></select>
+    <!-- ============================
+         CRIAR JOGO
+    ============================= -->
+    <div id="criarJogo" class="section">
+      <h2>Criar Jogo</h2>
 
-    <button onclick="carregarJogos()">Mostrar Jogos</button>
+      <label>Jornada</label>
+      <select id="jornada"></select>
 
-    <div id="listaJogos" style="margin-top: 15px;"></div>
+      <label>Equipa da Casa</label>
+      <input id="casa" type="text">
+
+      <label>Equipa de Fora</label>
+      <input id="fora" type="text">
+
+      <button class="action" onclick="addJogo()">Criar Jogo</button>
+      <div id="msgJogo" class="msg"></div>
+    </div>
+
+    <!-- ============================
+         VER JOGOS POR JORNADA
+    ============================= -->
+    <div id="verJogos" class="section">
+      <h2>Ver Jogos por Jornada</h2>
+
+      <label>Selecionar Jornada</label>
+      <select id="verJornada"></select>
+
+      <button class="action" onclick="carregarJogos()">Mostrar Jogos</button>
+
+      <div id="listaJogos" style="margin-top: 15px;"></div>
+    </div>
+
   </div>
 
   <script>
-    // ============================
-    // GERAR DROPDOWN DE JORNADAS
-    // ============================
+    // Mostrar secções
+    function mostrarSecao(id) {
+      document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
+      document.getElementById(id).style.display = 'block';
+    }
 
+    // Preencher dropdowns de jornada
     const jornadaSelect = document.getElementById("jornada");
     const verJornadaSelect = document.getElementById("verJornada");
 
@@ -125,10 +174,7 @@
       verJornadaSelect.appendChild(opt2);
     }
 
-    // ============================
-    // MENSAGENS
-    // ============================
-
+    // Mensagens
     function showMsg(id, texto) {
       const div = document.getElementById(id);
       div.innerText = texto;
@@ -136,10 +182,7 @@
       setTimeout(() => div.style.display = "none", 3000);
     }
 
-    // ============================
-    // CRIAR JOGO
-    // ============================
-
+    // Criar jogo
     async function addJogo() {
       const body = {
         jornada: Number(document.getElementById("jornada").value),
@@ -157,10 +200,7 @@
       showMsg("msgJogo", "Jogo criado com sucesso!");
     }
 
-    // ============================
-    // VER JOGOS POR JORNADA
-    // ============================
-
+    // Ver jogos por jornada
     async function carregarJogos() {
       const jornadaEscolhida = Number(document.getElementById("verJornada").value);
       const listaDiv = document.getElementById("listaJogos");
@@ -183,6 +223,9 @@
 
       listaDiv.innerHTML = html;
     }
+
+    // Mostrar a primeira secção ao carregar
+    mostrarSecao('criarJogo');
   </script>
 
 </body>
