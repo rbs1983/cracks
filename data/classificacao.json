@@ -1,5 +1,7 @@
 [
   { "pos": 1, "nome": "Benfica", "pontos": 45 },
   { "pos": 2, "nome": "Porto", "pontos": 42 },
-  { "pos": 3, "nome": "Sporting", "pontos": 40 }
+  { "pos": 3, "nome": "Sporting", "pontos": 40 },
+  { "pos": 4, "nome": "Braga", "pontos": 37 },
+  { "pos": 5, "nome": "Vitória SC", "pontos": 33 }
 ]
