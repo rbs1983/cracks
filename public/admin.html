@@ -91,16 +91,21 @@
       background: #1d4ed8;
     }
 
+    /* 🔵 OPÇÃO 2 — BOTÃO PILL SUAVE */
     .deleteBtn {
-      background: #dc2626;
-      padding: 5px 10px;
-      border-radius: 6px;
-      margin-left: 10px;
+      background: #f87171;
+      color: #1e293b;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: bold;
       cursor: pointer;
+      border: none;
+      transition: 0.2s;
     }
 
     .deleteBtn:hover {
-      background: #b91c1c;
+      background: #ef4444;
+      color: white;
     }
 
     .msg {
@@ -238,7 +243,7 @@
         html += `
           <li>
             Jornada ${j.jornada}: ${j.casa} vs ${j.fora}
-            <span class="deleteBtn" onclick="apagarJogo(${i})">Apagar</span>
+            <button class="deleteBtn" onclick="apagarJogo(${i})">Apagar</button>
           </li>`;
       }
       html += "</ul>";
